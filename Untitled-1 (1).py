@@ -15,64 +15,50 @@ def position_piece(sqrx, sqry):
 
 #class that contains classes for each of the types of chess pieces
 class chess:
-    def __init__(self, color, position):
+    def __init__(self, color, position, type):
             self.color = color
-            self.position = position
             chess_pieces.append(self)
-
-    #procedure to load the chess pieces onto a board
-    def load_img(self, type):
-        file_name = self.color + type + ".png"
-        img = load_chess_piece(file_name)
-        canvas.blit(img, dest = position_piece(self.position[0], self.position[1])) 
+         
+            #loading the object's image onto the board
+            file_name = self.color + type + ".png"
+            self.img = load_chess_piece(file_name)
+            canvas.blit(self.img, dest = position_piece(position[0], position[1])) 
+            if color == "white":
+                add = 60
+            else:
+                add = 30
+            self.rect = self.img.get_rect(topleft = (position[0]*65+62, position[1]*70+add))
+     
 
     #class for the kings
     class king:
         def __init__(self, color, position):
-            chess.__init__(self, color, position)
-        
-        def load(self):
-            chess.load_img(self, "king")
+            chess.__init__(self, color, position, "king")
 
     #class for the queens
     class queen:
         def __init__(self, color, position):
-            chess.__init__(self, color, position)
-        
-        def load(self):
-            chess.load_img(self, "queen")
+            chess.__init__(self, color, position, "queen")
 
     #class for the bishops   
     class bishop:
         def __init__(self, color, position):
-            chess.__init__(self, color, position)
-        
-        def load(self):
-            chess.load_img(self, "bishop")
+            chess.__init__(self, color, position, "bishop")
 
     #class for the knights
     class knight:
         def __init__(self, color, position):
-            chess.__init__(self, color, position)
-        
-        def load(self):
-            chess.load_img(self, "knight")
+            chess.__init__(self, color, position, "knight")
 
     #class for the rucks
     class ruck:
         def __init__(self, color, position):
-            chess.__init__(self, color, position)
-        
-        def load(self):
-            chess.load_img(self, "ruck")
+            chess.__init__(self, color, position, "ruck")
 
     #class for the pawns
     class pawn:
         def __init__(self, color, position):
-            chess.__init__(self, color, position)
-        
-        def load(self):
-            chess.load_img(self, "pawn")
+            chess.__init__(self, color, position, "pawn")
 
 #procedure that sets up the chess board
 def set_up(color):
@@ -110,18 +96,20 @@ image = pygame.image.load("chessboard.jpg")
 image = pygame.transform.scale(image, (650,650))
  
 canvas.blit(image, dest = (0,0))
+#calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
 chess_pieces = []
-#calling the procedure 'set_up' to set up the chess pieces and then loading the images onto the board
 set_up("white")
 set_up("black")
 
-for item in chess_pieces:
-    item.load()
 
 #mainloop
 while not exit:
     #checking for the QUIT event and closing the window if needed 
     for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for piece in chess_pieces:
+               if piece.rect.collidepoint(event.pos):
+                    print("On a piece")
         if event.type == pygame.QUIT:
             exit = True
     pygame.display.update()
