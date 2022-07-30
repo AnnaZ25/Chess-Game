@@ -106,12 +106,42 @@ def set_up():
             chessboard[j][z].status = colors[x]+"pawn"
             j += 1
 
-#new square allocation procedure for chess pieces
-def position_piece(sqrx, sqry):
-    init_sqr = 64
-    next_sqr = 65
-    position = (init_sqr + next_sqr*sqrx-1, init_sqr + next_sqr*sqry-1)
-    return position
+#function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
+#the loop will pick the first chessboard square selected in the list (in case the centre rect collides with more than one chessboard square)
+#function returns the chessboard square the piece should be placed on
+def find_square(rect_x, rect_y):
+    found_sqr = False
+    i = -1
+    j = 0
+    while not found_sqr and j!= 8:
+        i += 1
+        if chessboard[i][j].rect.collidepoint(rect_x, rect_y):
+            collision = chessboard[i][j]
+            found_sqr = True
+        if i == 7:
+            i = -1
+            j += 1  
+    if found_sqr:
+        return collision
+
+        
+#function that checks what type the piece passed in is and returns the name of that type
+def check_type(piece):
+    if isinstance(piece, chess.king):
+        chess_type = "king"
+    elif isinstance(piece, chess.queen):
+        chess_type = "queen"    
+    elif isinstance(piece, chess.bishop):
+        chess_type = "bishop"  
+    elif isinstance(piece, chess.knight):
+        chess_type = "knight"  
+    elif isinstance(piece, chess.ruck):
+        chess_type = "ruck"  
+    elif isinstance(piece, chess.pawn):
+        chess_type = "pawn"
+    else:
+        chess_type = "not a chess piece"  
+    return chess_type
 
 #main
 canvas = create_screen()
@@ -167,8 +197,12 @@ while not exit:
                                 #moves and draws the highlight (to show that the piece has been selected)
                                 highlight2 = highlight.move(piece.rect[0]+100, piece.rect[1]+100)
                                 pygame.draw.rect(canvas, "gray", highlight2, 5)
+                                #calls the function find_square which finds the chessboard square that the chess piece was on 
+                                
+                                chess_square_before = find_square(piece.rect_centre[0], piece.rect_centre[1])
                                 #updates the display
                                 pygame.display.update()
+                                
             
                     recieved_up2 = False 
                     #loop that runs until the mousebutton is up (i.e. the user has selected a spot they want to put the chess piece in) 
@@ -181,25 +215,30 @@ while not exit:
                                 recieved_up2 = True
                                 #moves the centre rect to the new position. This will help figure out which square the chess piece should be put into
                                 piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_up2.pos[0], -piece.rect_centre[1]+event_up2.pos[1])
-                                found_box = False
-                                i = -1
-                                j = 0
-                                #loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
-                                #the loop will pick the first chessboard square selected in the list (in case the centre rect collides with more than one chessboard square)
-                                while not found_box and j != 7:
-                                    i += 1
-                                    if chessboard[i][j].rect.collidepoint(piece.rect_centre[0], piece.rect_centre[1]):
-                                        found_box = True
-                                        #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
-                                        canvas.blit(background, position, position) 
-                                        #moves the image of the chess piece to the new position, along with its rect and centre rect
-                                        canvas.blit(piece.img, chessboard[i][j].rect)
-                                        piece.rect = piece.rect.move(-piece.rect[0]+chessboard[i][j].rect[0], -piece.rect[1]+chessboard[i][j].rect[1])
-                                        piece.rect_centre = piece.rect_centre.move(piece.rect[0]-35, piece.rect[1]-35)
-                                    if i == 7:
-                                        i = -1
-                                        j += 1
-                                #upates the display
+                                #calls the function find_square which finds the chessboard square that the chess piece will be moved to 
+                                chess_square = find_square(piece.rect_centre[0], piece.rect_centre[1])
+                                if chess_square != None:
+                                    #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
+                                    canvas.blit(background, position, position) 
+                                    #moves the image of the chess piece to the new position, along with its rect and centre rect
+                                    canvas.blit(piece.img, chess_square.rect)
+                                    piece.rect = piece.rect.move(-piece.rect[0]+chess_square.rect[0], -piece.rect[1]+chess_square.rect[1])
+                                    piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+piece.rect[0]+35, -piece.rect_centre[1]+piece.rect[1]+35)
+                                    
+                                    #sets the old chessboard square status to 'empty'
+                                    chess_square_before.status = "empty"
+
+                                    #calls a function to determine the chess piece type and then sets the chessboard square status to the chess piece type name
+                                    chess_piece = check_type(piece)
+                                    chess_square.status = chess_piece
+                                    
+                                else:
+                                    #erases the place where the chess piece is, along with the highlight, and replaces it with an empty background 
+                                    canvas.blit(background, position, position) 
+                                    #replaces the image of the chess piece in the same position and moves the centre rect back to its old position
+                                    canvas.blit(piece.img, position)
+                                    piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event.pos[0], -piece.rect_centre[1]+event.pos[1])
+                                #updates the display
                                 pygame.display.update()                
 
         if event.type == pygame.QUIT:
