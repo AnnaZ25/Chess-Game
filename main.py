@@ -24,11 +24,7 @@ class chess:
             self.img = load_chess_piece(file_name)
             canvas.blit(self.img, dest = position_piece(position[0], position[1])) 
             #creating a rectangle around the image and changing the position to match the image's position (needs to be scaled))
-            if color == "white":
-                add = 62
-            else:
-                add = 62
-            self.rect = self.img.get_rect(topleft = (position[0]*65+62, position[1]*65+add))
+            self.rect = self.img.get_rect(topleft = (position[0]*65+63, position[1]*65+63))
      
 
     #class for the kings
@@ -113,27 +109,60 @@ standard = (70,70)
 set_up("white")
 set_up("black")
 
+highlight = pygame.Rect(-100, -100, 70, 70)
+"""
+highlight = highlight.move(10, 10)
+pygame.draw.rect(canvas, "gray", highlight, 2)
+canvas.blit(background, highlight, highlight)   
+highlight = highlight.move(10, 10)
+pygame.draw.rect(canvas, "gray", highlight, 2)
+
+#highlight2 = highlight.move(-100,-100)
+#pygame.draw.rect(canvas, "gray", highlight2, 2)
+"""
+
+"""
+image = pygame.image.load("1042721.jpg")
+image = pygame.transform.scale(image, (70,70))
+canvas.blit(image, dest = (65+62, 65+62))
+"""
 #mainloop
 while not exit:
     #checking for the QUIT event and closing the window if needed 
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONDOWN:
-            check = False
-            for piece in chess_pieces:
+            found = False
+            i = -1
+            while not found and i != 31:
+                i += 1
+                piece = chess_pieces[i]
                 if piece.rect.collidepoint(event.pos):
+                    found = True
                     pygame.mouse.set_cursor(pygame.cursors.diamond)
-                    check = [True, piece] 
-                    position = piece.rect    
-                    canvas.blit(background, position, position)   
-                    recieved = False
-                    while not recieved:
+                    received_up1 = False
+                    while not received_up1:
                         pygame.time.delay(10)
-                        for event2 in pygame.event.get():
-                            if event2.type == pygame.MOUSEBUTTONUP:
-                                recieved = True
-                                canvas.blit(piece.img, (event2.pos[0]-35, event2.pos[1]-35))
-                                piece.rect = piece.rect.move(-piece.rect[0]+event2.pos[0]-35,-piece.rect[1]+event2.pos[1]-35)
+                        for event_up1 in pygame.event.get():
+                            if event_up1.type == pygame.MOUSEBUTTONUP:
+                                pygame.mouse.set_cursor(pygame.cursors.arrow)
+                                received_up1 = True
+                                highlight2 = highlight.move(piece.rect[0]+100, piece.rect[1]+100)
+                                pygame.draw.rect(canvas, "gray", highlight2, 5)
+                                pygame.display.update()
+            
+                    recieved_down = False 
+                    while not recieved_down:
+                        pygame.time.delay(10)
+                        position = piece.rect    
+                        canvas.blit(background, position, position)  
+                        for event_down in pygame.event.get():
+                            if event_down.type == pygame.MOUSEBUTTONUP:
+                                recieved_down = True
+                                canvas.blit(piece.img, (event_down.pos[0]-35, event_down.pos[1]-35))
+                                piece.rect = piece.rect.move(-piece.rect[0]+event_down.pos[0]-35,-piece.rect[1]+event_down.pos[1]-35)
                                 pygame.display.update() 
+
+                
                               
                    
         elif event.type == pygame.MOUSEBUTTONUP:
