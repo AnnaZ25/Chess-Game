@@ -1,17 +1,20 @@
 import pygame
 
-#function that loads the chess pieces
-def load_chess_piece(name):
-    image = pygame.image.load(name)
-    image = pygame.transform.scale(image, standard)
-    return image
+#initialising the window and configuring its details
+def create_screen():
+    pygame.init()
+    canvas = pygame.display.set_mode((650, 650))
+    pygame.display.set_caption("Chess Game")
+    img = pygame.image.load("blackking.png")
+    pygame.display.set_icon(img) 
+    pygame.mouse.set_cursor(pygame.cursors.arrow)
 
-#new square allocation procedure for chess pieces
-def position_piece(sqrx, sqry):
-    init_sqr = 64
-    next_sqr = 65
-    position = (init_sqr + next_sqr*sqrx-1, init_sqr + next_sqr*sqry-1)
-    return position
+    return canvas
+
+def load_background():
+    image = pygame.image.load("chessboard.jpg")
+    image = pygame.transform.scale(image, (650,650))
+    return image
 
 #class that contains classes for each of the types of chess pieces
 class chess:
@@ -57,6 +60,12 @@ class chess:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "pawn")
 
+#function that loads the chess pieces
+def load_chess_piece(name):
+    image = pygame.image.load(name)
+    image = pygame.transform.scale(image, standard)
+    return image
+
 #procedure that sets up the chess board
 def set_up(color):
     pos = [4, 3, 2, 1, 0, 5, 6, 7]
@@ -80,22 +89,14 @@ def set_up(color):
         chess.pawn(color, (j, z))
         j += 1
 
-#initialising the window and configuring its details
-def create_screen():
-    pygame.init()
-    canvas = pygame.display.set_mode((650, 650))
-    pygame.display.set_caption("Chess Game")
-    img = pygame.image.load("blackking.png")
-    pygame.display.set_icon(img) 
-    pygame.mouse.set_cursor(pygame.cursors.arrow)
+#new square allocation procedure for chess pieces
+def position_piece(sqrx, sqry):
+    init_sqr = 64
+    next_sqr = 65
+    position = (init_sqr + next_sqr*sqrx-1, init_sqr + next_sqr*sqry-1)
+    return position
 
-    return canvas
-
-def load_background():
-    image = pygame.image.load("chessboard.jpg")
-    image = pygame.transform.scale(image, (650,650))
-    return image
-
+#main
 canvas = create_screen()
 background = load_background()
 canvas.blit(background, (0, 0))        
