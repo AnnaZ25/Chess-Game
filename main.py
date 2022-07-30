@@ -96,9 +96,6 @@ def load_background():
     image = pygame.transform.scale(image, (650,650))
     return image
 
-
-exit = False
-
 canvas = create_screen()
 background = load_background()
 canvas.blit(background, (0, 0))        
@@ -109,23 +106,12 @@ standard = (70,70)
 set_up("white")
 set_up("black")
 
-highlight = pygame.Rect(-100, -100, 70, 70)
-"""
-highlight = highlight.move(10, 10)
-pygame.draw.rect(canvas, "gray", highlight, 2)
-canvas.blit(background, highlight, highlight)   
-highlight = highlight.move(10, 10)
-pygame.draw.rect(canvas, "gray", highlight, 2)
+#creating the highlight rect that will be moved to select a chess piece
+highlight = pygame.Rect((-100, -100), standard)
 
-#highlight2 = highlight.move(-100,-100)
-#pygame.draw.rect(canvas, "gray", highlight2, 2)
-"""
+#setting the variable exit to False to start the loop
+exit = False
 
-"""
-image = pygame.image.load("1042721.jpg")
-image = pygame.transform.scale(image, (70,70))
-canvas.blit(image, dest = (65+62, 65+62))
-"""
 #mainloop
 while not exit:
     #checking for the QUIT event and closing the window if needed 
@@ -133,49 +119,48 @@ while not exit:
         if event.type == pygame.MOUSEBUTTONDOWN:
             found = False
             i = -1
+            #looping through the list of chess pieces to identify whether a chess piece has been selected. 
+            #the loop will pick the first chess piece selected in the list(in case the mouse click landed on two squares adjacent to each other)
             while not found and i != 31:
                 i += 1
                 piece = chess_pieces[i]
+                #checks wether the piece has been selected
                 if piece.rect.collidepoint(event.pos):
                     found = True
+                    #changes the cursor to a diamond
                     pygame.mouse.set_cursor(pygame.cursors.diamond)
                     received_up1 = False
+                    #loop that runs until the mousebutton is up 
                     while not received_up1:
                         pygame.time.delay(10)
                         for event_up1 in pygame.event.get():
+                            #checks for a 'mousebutton up' event
                             if event_up1.type == pygame.MOUSEBUTTONUP:
+                                #sets the cursor to an arrow
                                 pygame.mouse.set_cursor(pygame.cursors.arrow)
                                 received_up1 = True
+                                #moves and draws the highlight (to show that the piece has been selected)
                                 highlight2 = highlight.move(piece.rect[0]+100, piece.rect[1]+100)
                                 pygame.draw.rect(canvas, "gray", highlight2, 5)
+                                #updates the display
                                 pygame.display.update()
             
-                    recieved_down = False 
-                    while not recieved_down:
+                    recieved_up2 = False 
+                    #loop that runs until the mousebutton is up (i.e. the user has selected a spot they want to put the chess piece in) 
+                    while not recieved_up2:
                         pygame.time.delay(10)
                         position = piece.rect    
-                        canvas.blit(background, position, position)  
-                        for event_down in pygame.event.get():
-                            if event_down.type == pygame.MOUSEBUTTONUP:
-                                recieved_down = True
-                                canvas.blit(piece.img, (event_down.pos[0]-35, event_down.pos[1]-35))
-                                piece.rect = piece.rect.move(-piece.rect[0]+event_down.pos[0]-35,-piece.rect[1]+event_down.pos[1]-35)
-                                pygame.display.update() 
-
-                
-                              
-                   
-        elif event.type == pygame.MOUSEBUTTONUP:
-            pygame.mouse.set_cursor(pygame.cursors.arrow) 
-            """ 
-            if check[0]:
-                piece = check[1]
-                position = piece.rect                 
-                canvas.blit(background, position, position) 
-                #2nd position tells the area to be replaced, the first tells the where the rectangles will be replaced
-                position = position.move(event.pos)    
-                canvas.blit(piece.img, position)      
-                pygame.display.update()     """
+                        for event_up2 in pygame.event.get():
+                            #checks for a 'mousebutton up' event
+                            if event_up2.type == pygame.MOUSEBUTTONUP:
+                                #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
+                                canvas.blit(background, position, position)  
+                                recieved_up2 = True
+                                #moves the image of the chess piece to the new position, along with its rect
+                                canvas.blit(piece.img, (event_up2.pos[0]-35, event_up2.pos[1]-35))
+                                piece.rect = piece.rect.move(-piece.rect[0]+event_up2.pos[0]-35, -piece.rect[1]+event_up2.pos[1]-35)
+                                #upates the display
+                                pygame.display.update()                
 
         if event.type == pygame.QUIT:
             exit = True
