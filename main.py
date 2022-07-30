@@ -3,7 +3,7 @@ import pygame
 #function that loads the chess pieces
 def load_chess_piece(name):
     image = pygame.image.load(name)
-    image = pygame.transform.scale(image, (70,70))
+    image = pygame.transform.scale(image, standard)
     return image
 
 #new square allocation procedure for chess pieces
@@ -23,11 +23,12 @@ class chess:
             file_name = self.color + type + ".png"
             self.img = load_chess_piece(file_name)
             canvas.blit(self.img, dest = position_piece(position[0], position[1])) 
+            #creating a rectangle around the image and changing the position to match the image's position (needs to be scaled))
             if color == "white":
-                add = 60
+                add = 62
             else:
-                add = 30
-            self.rect = self.img.get_rect(topleft = (position[0]*65+62, position[1]*70+add))
+                add = 62
+            self.rect = self.img.get_rect(topleft = (position[0]*65+62, position[1]*65+add))
      
 
     #class for the kings
@@ -84,32 +85,69 @@ def set_up(color):
         j += 1
 
 #initialising the window and configuring its details
-pygame.init()
-canvas = pygame.display.set_mode((650, 650))
-pygame.display.set_caption("Chess Game")
+def create_screen():
+    pygame.init()
+    canvas = pygame.display.set_mode((650, 650))
+    pygame.display.set_caption("Chess Game")
+    img = pygame.image.load("blackking.png")
+    pygame.display.set_icon(img) 
+    pygame.mouse.set_cursor(pygame.cursors.arrow)
+
+    return canvas
+
+def load_background():
+    image = pygame.image.load("chessboard.jpg")
+    image = pygame.transform.scale(image, (650,650))
+    return image
+
+
 exit = False
 
-img = pygame.image.load("blackking.png")
-pygame.display.set_icon(img) 
+canvas = create_screen()
+background = load_background()
+canvas.blit(background, (0, 0))        
 
-image = pygame.image.load("chessboard.jpg")
-image = pygame.transform.scale(image, (650,650))
- 
-canvas.blit(image, dest = (0,0))
 #calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
 chess_pieces = []
+standard = (70,70)
 set_up("white")
 set_up("black")
-
 
 #mainloop
 while not exit:
     #checking for the QUIT event and closing the window if needed 
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONDOWN:
+            check = False
             for piece in chess_pieces:
-               if piece.rect.collidepoint(event.pos):
-                    print("On a piece")
+                if piece.rect.collidepoint(event.pos):
+                    pygame.mouse.set_cursor(pygame.cursors.diamond)
+                    check = [True, piece] 
+                    position = piece.rect    
+                    canvas.blit(background, position, position)   
+                    recieved = False
+                    while not recieved:
+                        pygame.time.delay(10)
+                        for event2 in pygame.event.get():
+                            if event2.type == pygame.MOUSEBUTTONUP:
+                                recieved = True
+                                canvas.blit(piece.img, (event2.pos[0]-35, event2.pos[1]-35))
+                                piece.rect = piece.rect.move(-piece.rect[0]+event2.pos[0]-35,-piece.rect[1]+event2.pos[1]-35)
+                                pygame.display.update() 
+                              
+                   
+        elif event.type == pygame.MOUSEBUTTONUP:
+            pygame.mouse.set_cursor(pygame.cursors.arrow) 
+            """ 
+            if check[0]:
+                piece = check[1]
+                position = piece.rect                 
+                canvas.blit(background, position, position) 
+                #2nd position tells the area to be replaced, the first tells the where the rectangles will be replaced
+                position = position.move(event.pos)    
+                canvas.blit(piece.img, position)      
+                pygame.display.update()     """
+
         if event.type == pygame.QUIT:
             exit = True
     pygame.display.update()
