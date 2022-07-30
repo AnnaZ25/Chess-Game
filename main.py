@@ -16,19 +16,29 @@ def load_background():
     image = pygame.transform.scale(image, (650,650))
     return image
 
+#class that contains the square blocks on the chessboard
+class square:
+    def __init__(self, x, y):
+        #determines the position of the square on the chessboard and creates a rect to represent the square
+        self.rect = pygame.Rect((x*65+63, y*65+63), standard)
+        #determines the status of the square
+        self.status = "empty"
+
 #class that contains classes for each of the types of chess pieces
 class chess:
-    def __init__(self, color, position, type):
+    def __init__(self, color, square, type):
             self.color = color
             chess_pieces.append(self)
-         
+            position = square.rect
             #loading the object's image onto the board
             file_name = self.color + type + ".png"
             self.img = load_chess_piece(file_name)
-            canvas.blit(self.img, dest = position_piece(position[0], position[1])) 
-            #creating a rectangle around the image and changing the position to match the image's position (needs to be scaled))
-            self.rect = self.img.get_rect(topleft = (position[0]*65+63, position[1]*65+63))
-     
+            #creating a rect around the image and changing the position to match the image's position (needs to be scaled))
+            canvas.blit(self.img, dest = position) 
+            self.rect = self.img.get_rect(topleft = (position[0], position[1]))
+            #creating a centre point so that the appropriate square the chess piece is moved to can be allocated accurately
+            #this means that the chess piece can be made to sit exactly inside a square, even if not placed exactly inside the square by the user. 
+            self.rect_centre = pygame.Rect(self.rect[0]+35, self.rect[1]+35, 1, 1)
 
     #class for the kings
     class king:
@@ -67,27 +77,34 @@ def load_chess_piece(name):
     return image
 
 #procedure that sets up the chess board
-def set_up(color):
-    pos = [4, 3, 2, 1, 0, 5, 6, 7]
-    if color == "white":
-        y = 0
-        z = 1
-    else:
-        y = 7
-        z = 6
-
-    chess.king(color, (pos[0], y))
-    chess.queen(color, (pos[1], y))
-    j = 0
-    for i in range (0,2):
-        chess.bishop(color, (pos[2+j],y))
-        chess.knight(color, (pos[3+j],y))
-        chess.ruck(color, (pos[4+j],y))
-        j = 3
-    j = 0
-    for i in range (0, 8):
-        chess.pawn(color, (j, z))
-        j += 1
+def set_up():
+    colors = ["white", "black"]
+    for x in range(0, 2):
+        pos = [3, 4, 2, 1, 0, 5, 6, 7]
+        if colors[x] == "white":
+            y = 0
+            z = 1
+        else:
+            y = 7
+            z = 6
+        chess.king(colors[x], chessboard[pos[0]][y])
+        chess.queen(colors[x], chessboard[pos[1]][y])
+        chessboard[pos[0]][y].status = colors[x]+"king"
+        chessboard[pos[1]][y].status = colors[x]+"queen"
+        j = 0
+        for i in range (0,2):
+            chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            chess.knight(colors[x], chessboard[pos[3+j]][y])
+            chess.ruck(colors[x], chessboard[pos[4+j]][y])
+            chessboard[pos[2+j]][y].status = colors[x]+"bishop"
+            chessboard[pos[3+j]][y].status = colors[x]+"knight"
+            chessboard[pos[4+j]][y].status = colors[x]+"ruck"
+            j = 3
+        j = 0
+        for i in range (0, 8):
+            chess.pawn(colors[x], chessboard[j][z])
+            chessboard[j][z].status = colors[x]+"pawn"
+            j += 1
 
 #new square allocation procedure for chess pieces
 def position_piece(sqrx, sqry):
@@ -99,13 +116,20 @@ def position_piece(sqrx, sqry):
 #main
 canvas = create_screen()
 background = load_background()
-canvas.blit(background, (0, 0))        
+canvas.blit(background, (0, 0))  
+standard = (70,70)      
+
+#creating an array of all the squares, represented by rects, on the chess board
+chessboard = []
+for i in range (0, 8):
+    chess_row = []
+    for j in range(0, 8):
+        chess_row.append(square(i, j))
+    chessboard.append(chess_row)
 
 #calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
 chess_pieces = []
-standard = (70,70)
-set_up("white")
-set_up("black")
+set_up()
 
 #creating the highlight rect that will be moved to select a chess piece
 highlight = pygame.Rect((-100, -100), standard)
@@ -154,12 +178,27 @@ while not exit:
                         for event_up2 in pygame.event.get():
                             #checks for a 'mousebutton up' event
                             if event_up2.type == pygame.MOUSEBUTTONUP:
-                                #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
-                                canvas.blit(background, position, position)  
                                 recieved_up2 = True
-                                #moves the image of the chess piece to the new position, along with its rect
-                                canvas.blit(piece.img, (event_up2.pos[0]-35, event_up2.pos[1]-35))
-                                piece.rect = piece.rect.move(-piece.rect[0]+event_up2.pos[0]-35, -piece.rect[1]+event_up2.pos[1]-35)
+                                #moves the centre rect to the new position. This will help figure out which square the chess piece should be put into
+                                piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_up2.pos[0], -piece.rect_centre[1]+event_up2.pos[1])
+                                found_box = False
+                                i = -1
+                                j = 0
+                                #loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
+                                #the loop will pick the first chessboard square selected in the list (in case the centre rect collides with more than one chessboard square)
+                                while not found_box and j != 7:
+                                    i += 1
+                                    if chessboard[i][j].rect.collidepoint(piece.rect_centre[0], piece.rect_centre[1]):
+                                        found_box = True
+                                        #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
+                                        canvas.blit(background, position, position) 
+                                        #moves the image of the chess piece to the new position, along with its rect and centre rect
+                                        canvas.blit(piece.img, chessboard[i][j].rect)
+                                        piece.rect = piece.rect.move(-piece.rect[0]+chessboard[i][j].rect[0], -piece.rect[1]+chessboard[i][j].rect[1])
+                                        piece.rect_centre = piece.rect_centre.move(piece.rect[0]-35, piece.rect[1]-35)
+                                    if i == 7:
+                                        i = -1
+                                        j += 1
                                 #upates the display
                                 pygame.display.update()                
 
