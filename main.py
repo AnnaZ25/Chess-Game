@@ -27,62 +27,121 @@ class square:
 #class that contains classes for each of the types of chess pieces
 class chess:
     def __init__(self, color, square, type):
-            self.color = color
-            chess_pieces.append(self)
-            position = square.rect
-            #loading the object's image onto the board
-            file_name = self.color + type + ".png"
-            self.img = load_chess_piece(file_name)
-            #creating a rect around the image and changing the position to match the image's position (needs to be scaled))
-            canvas.blit(self.img, dest = position) 
-            self.rect = self.img.get_rect(topleft = (position[0], position[1]))
-            #creating a centre point so that the appropriate square the chess piece is moved to can be allocated accurately
-            #this means that the chess piece can be made to sit exactly inside a square, even if not placed exactly inside the square by the user. 
-            self.rect_centre = pygame.Rect(self.rect[0]+35, self.rect[1]+35, 1, 1)
+        self.color = color
+        chess_pieces.append(self)
+        position = square.rect
+        #loading the object's image onto the board
+        file_name = self.color + type + ".png"
+        self.img = load_chess_piece(file_name)
+        #creating a rect around the image and changing the position to match the image's position (needs to be scaled))
+        canvas.blit(self.img, dest = position) 
+        self.rect = self.img.get_rect(topleft = (position[0], position[1]))
+        #creating a centre point so that the appropriate square the chess piece is moved to can be allocated accurately
+        #this means that the chess piece can be made to sit exactly inside a square, even if not placed exactly inside the square by the user. 
+        self.rect_centre = pygame.Rect(self.rect[0]+35, self.rect[1]+35, 1, 1)
+
+    #function that finds the available moves of a piece from a list of possible moves
+    def find_moves(self, moves):
+        available_moves = []
+        for i in range(0, len(moves)):
+            #checking whether the square coordinates are within the existing range of square coordinates
+            if moves[i][0] >= 0 and moves[i][0] <= 7 and moves[i][1] >= 0 and moves[i][1] <= 7:
+                chessboard_sqr = chessboard[moves[i][0]][moves[i][1]]
+                #checking whether the square contains a chess piece and checking its colour
+                #this is so that only empty squares and squares containing a different color than the chess piece (that is not the king) are added to the avaliable moves list
+                if chessboard_sqr.status != "empty":
+                    if chessboard_sqr.status.color != self.color and not isinstance(chessboard_sqr.status, chess.king):
+                        available_moves.append(moves[i])
+                else:
+                    available_moves.append(moves[i])
+        return available_moves
 
     #class for the kings
     class king:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "king")
         
-        #takes in the current box coordinates the king is in and his color
+        #takes in the current square coordinates the king is in
         #returns the coordinates of the chessboard squares the king can move to
-        def moves(self, x, y, color):
-            moves = [[x, y+1], [x+1, y+1], [x+1, y], [x+1, y-1], [x, y-1], [x-1, y-1], [x-1, y], [x-1, y+1]]
-            available_moves = []
-            for i in range(0, len(moves)):
-                #checking whether the square coordinates are within the existing range of square coordinates
-                if moves[i][0] >= 0 and moves[i][0] <= 7 and moves[i][1] >= 0 and moves[i][1] <= 7:
-                    chessboard_sqr = chessboard[moves[i][0]][moves[i][1]]
-                    #checking whether the square contains a chess piece and checking its colour
-                    #this is so that only empty and squares containing a different color than the king are added to the avaliable moves list
-                    if chessboard_sqr.status != "empty":
-                        if chessboard_sqr.status.color != color:
-                            available_moves.append(chessboard_sqr)
-                    else:
-                        available_moves.append(chessboard_sqr)
-            return available_moves
-
+        def moves(self, x, y):
+            moves = []
+            for i in range (-1, 2):
+                for j in range (-1, 2):
+                    moves.append([x+j, y+i])
+            moves.remove([x, y])
+            return chess.find_moves(self, moves)
 
     #class for the queens
     class queen:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "queen")
 
+        #takes in the current square coordinates the queen is in
+        #returns the coordinates of the chessboard squares the queen can move to
+        def moves(self, x, y):
+            moves = []
+            for i in range (-7, 8):
+                moves.append([x+i, y])
+                moves.append([x, y+i])
+                moves.append([x+i, y-i])
+                moves.append([x-i, y+i])
+                moves.append([x+i, y+i])
+                moves.append([x-i, y-i])
+            for i in range (0, 6):
+                moves.remove([x, y])
+            return chess.find_moves(self, moves)
+
     #class for the bishops   
     class bishop:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "bishop")
+
+        #takes in the current square coordinates the bishop is in
+        #returns the coordinates of the chessboard squares the bishop can move to
+        def moves(self, x, y):
+            moves = []
+            for i in range (-7, 8):
+                moves.append([x+i, y-i])
+                moves.append([x-i, y+i])
+                moves.append([x+i, y+i])
+                moves.append([x-i, y-i])
+            for i in range (0, 4):
+                moves.remove([x, y])
+            return chess.find_moves(self, moves)
 
     #class for the knights
     class knight:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "knight")
 
+        #takes in the current square coordinates the knight is in
+        #returns the coordinates of the chessboard squares the knight can move to
+        def moves(self, x, y):
+            moves = []
+            for i in range (-2, 0):
+                moves.append([x+i, y+3+i]) 
+                moves.append([x-i, y-3-i])
+            moves.append([x+1, y+2])
+            moves.append([x+2, y+1])
+            moves.append([x-2, y-1])
+            moves.append([x-1, y-2])
+            return chess.find_moves(self, moves)
+
     #class for the rucks
     class ruck:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "ruck")
+        
+        #takes in the current square coordinates the ruck is in
+        #returns the coordinates of the chessboard squares the ruck can move to
+        def moves(self, x, y):    
+            moves = []
+            for i in range (-7, 8):
+                moves.append([x+i, y])
+                moves.append([x, y+i])
+            for i in range (0, 2):
+                moves.remove([x, y])
+            return chess.find_moves(self, moves)
 
     #class for the pawns
     class pawn:
@@ -110,13 +169,13 @@ def set_up():
         chessboard[pos[1]][y].status = chess.queen(colors[x], chessboard[pos[1]][y])
         j = 0
         for i in range (0,2):
-            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
             chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            chessboard[pos[4+j]][y].status = chess.ruck(colors[x], chessboard[pos[4+j]][y])
+            #chessboard[pos[4+j]][y].status = chess.ruck(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -158,7 +217,7 @@ def reset_click(position, piece, event):
 def valid_move(available_moves, potential):
     valid = False
     for i in range (0, len(available_moves)):
-        if available_moves[0][0] == potential[0] and available_moves[0][1] == potential[1]:
+        if available_moves[i][0] == potential[0] and available_moves[i][1] == potential[1]:
             valid = True
     return valid 
 
@@ -195,7 +254,7 @@ while not exit:
             i = -1
             #looping through the list of chess pieces to identify whether a chess piece has been selected. 
             #the loop will pick the first chess piece selected in the list(in case the mouse click landed on two squares adjacent to each other)
-            while not found and i != 31:
+            while not found and i != len(chess_pieces)-1:
                 i += 1
                 piece = chess_pieces[i]
                 #checks wether the piece has been selected
@@ -235,7 +294,7 @@ while not exit:
                                 #if it is within a square's region, and the square is within the possible moves of the piece, the cursor is changed to a diamond
                                 if potential_x_y != None:
                                     #the moves function is called (specific to the piece type) and the available moves that the piece can take are found
-                                    available_moves = piece.moves(chess_square_coords[0], chess_square_coords[1], piece.color)
+                                    available_moves = piece.moves(chess_square_coords[0], chess_square_coords[1])
                                     #calls function to check potential move validity
                                     valid = valid_move(available_moves, potential_x_y)
                                     #changes the cursor to a diamond if the potential move is valid
