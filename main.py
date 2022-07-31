@@ -87,23 +87,17 @@ def set_up():
         else:
             y = 7
             z = 6
-        chess.king(colors[x], chessboard[pos[0]][y])
-        chess.queen(colors[x], chessboard[pos[1]][y])
-        chessboard[pos[0]][y].status = colors[x]+"king"
-        chessboard[pos[1]][y].status = colors[x]+"queen"
+        chessboard[pos[0]][y].status = chess.king(colors[x], chessboard[pos[0]][y])
+        chessboard[pos[1]][y].status = chess.queen(colors[x], chessboard[pos[1]][y])
         j = 0
         for i in range (0,2):
-            chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            chess.knight(colors[x], chessboard[pos[3+j]][y])
-            chess.ruck(colors[x], chessboard[pos[4+j]][y])
-            chessboard[pos[2+j]][y].status = colors[x]+"bishop"
-            chessboard[pos[3+j]][y].status = colors[x]+"knight"
-            chessboard[pos[4+j]][y].status = colors[x]+"ruck"
+            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            chessboard[pos[4+j]][y].status = chess.ruck(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            chess.pawn(colors[x], chessboard[j][z])
-            chessboard[j][z].status = colors[x]+"pawn"
+            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -123,25 +117,6 @@ def find_square(rect_x, rect_y):
             j += 1  
     if found_sqr:
         return collision
-
-        
-#function that checks what type the piece passed in is and returns the name of that type
-def check_type(piece):
-    if isinstance(piece, chess.king):
-        chess_type = "king"
-    elif isinstance(piece, chess.queen):
-        chess_type = "queen"    
-    elif isinstance(piece, chess.bishop):
-        chess_type = "bishop"  
-    elif isinstance(piece, chess.knight):
-        chess_type = "knight"  
-    elif isinstance(piece, chess.ruck):
-        chess_type = "ruck"  
-    elif isinstance(piece, chess.pawn):
-        chess_type = "pawn"
-    else:
-        chess_type = "not a chess piece"  
-    return chess_type
 
 #main
 canvas = create_screen()
@@ -198,12 +173,24 @@ while not exit:
                                 highlight2 = highlight.move(piece.rect[0]+100, piece.rect[1]+100)
                                 pygame.draw.rect(canvas, "gray", highlight2, 5)
                                 #calls the function find_square which finds the chessboard square that the chess piece was on 
-                                
                                 chess_square_before = find_square(piece.rect_centre[0], piece.rect_centre[1])
                                 #updates the display
                                 pygame.display.update()
                                 
-            
+                    received_down = False
+                    while not received_down:
+                        for event_down in pygame.event.get():
+                            if event_down.type == pygame.MOUSEBUTTONDOWN:
+                                received_down = True
+                                #moves the centre rect to the position the mousebutton has clicked down on
+                                piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_down.pos[0], -piece.rect_centre[1]+event_down.pos[1])
+                                #calls the function find_square to find which chessboard square this rect collides with
+                                chess_square = find_square(piece.rect_centre[0], piece.rect_centre[1])
+                                #if it is within a square's region, the cursor is changed to a diamond
+                                if chess_square != None:
+                                    #changes the cursor to a diamond
+                                    pygame.mouse.set_cursor(pygame.cursors.diamond)
+
                     recieved_up2 = False 
                     #loop that runs until the mousebutton is up (i.e. the user has selected a spot they want to put the chess piece in) 
                     while not recieved_up2:
@@ -212,12 +199,21 @@ while not exit:
                         for event_up2 in pygame.event.get():
                             #checks for a 'mousebutton up' event
                             if event_up2.type == pygame.MOUSEBUTTONUP:
+                                #sets the cursor to an arrow
+                                pygame.mouse.set_cursor(pygame.cursors.arrow)
                                 recieved_up2 = True
                                 #moves the centre rect to the new position. This will help figure out which square the chess piece should be put into
                                 piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_up2.pos[0], -piece.rect_centre[1]+event_up2.pos[1])
                                 #calls the function find_square which finds the chessboard square that the chess piece will be moved to 
                                 chess_square = find_square(piece.rect_centre[0], piece.rect_centre[1])
                                 if chess_square != None:
+                                    #checks whether the square is already occupied, and if so, erases the place where the piece was and moves its rect out of the screen
+                                    #this prevents the piece from appearing on the chessboard again
+                                    if chess_square.status != "empty":
+                                        chess_square.status.rect = chess_square.status.rect.move(-1000, -1000)
+                                        canvas.blit(background, chess_square.rect, chess_square.rect)
+                                        pygame.display.update()
+
                                     #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
                                     canvas.blit(background, position, position) 
                                     #moves the image of the chess piece to the new position, along with its rect and centre rect
@@ -226,12 +222,11 @@ while not exit:
                                     piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+piece.rect[0]+35, -piece.rect_centre[1]+piece.rect[1]+35)
                                     
                                     #sets the old chessboard square status to 'empty'
-                                    chess_square_before.status = "empty"
+                                    chess_square_before.status = "empty"   
 
-                                    #calls a function to determine the chess piece type and then sets the chessboard square status to the chess piece type name
-                                    chess_piece = check_type(piece)
-                                    chess_square.status = chess_piece
-                                    
+                                    #assigns the new chessboard square status to the chess piece
+                                    chess_square.status = piece
+
                                 else:
                                     #erases the place where the chess piece is, along with the highlight, and replaces it with an empty background 
                                     canvas.blit(background, position, position) 
