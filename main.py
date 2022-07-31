@@ -152,9 +152,9 @@ class chess:
         #returns the coordinates of the chessboard squares the pawn can move to
         def moves(self, x, y):
             if self.color == "white":
-                z = 1
-            else:
                 z = -1
+            else:
+                z = 1
             
             moves = [[x+1, y+z], [x, y+z], [x-1, y+z]]
             filtered = chess.find_moves(self, moves)
@@ -177,13 +177,13 @@ def set_up():
     for x in range(0, 2):
         pos = [3, 4, 2, 1, 0, 5, 6, 7]
         if colors[x] == "white":
-            y = 0
-            z = 1
-        else:
             y = 7
             z = 6
-        chessboard[pos[0]][y].status = chess.king(colors[x], chessboard[pos[0]][y])
-        chessboard[pos[1]][y].status = chess.queen(colors[x], chessboard[pos[1]][y])
+        else:
+            y = 0
+            z = 1
+        chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
+        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
             chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
