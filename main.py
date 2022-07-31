@@ -148,6 +148,24 @@ class chess:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "pawn")
 
+        #takes in the current square coordinates the pawn is in
+        #returns the coordinates of the chessboard squares the pawn can move to
+        def moves(self, x, y):
+            if self.color == "white":
+                z = 1
+            else:
+                z = -1
+            
+            moves = [[x+1, y+z], [x, y+z], [x-1, y+z]]
+
+            #filtering out the diagonal moves so that the pawn can be placed only on a diagonal block spot if there is another chess piece there
+            diagonal = [moves[0], moves[2]]
+            for i in range (0, 2):
+                if chessboard[diagonal[i][0]][diagonal[i][1]].status == "empty":
+                    moves.remove(diagonal[i])
+            
+            return chess.find_moves(self, moves)
+
 #function that loads the chess pieces
 def load_chess_piece(name):
     image = pygame.image.load(name)
@@ -169,13 +187,13 @@ def set_up():
         chessboard[pos[1]][y].status = chess.queen(colors[x], chessboard[pos[1]][y])
         j = 0
         for i in range (0,2):
-            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
             chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            #chessboard[pos[4+j]][y].status = chess.ruck(colors[x], chessboard[pos[4+j]][y])
+            chessboard[pos[4+j]][y].status = chess.ruck(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -340,6 +358,7 @@ while not exit:
 
                                         #assigns the new chessboard square status to the chess piece
                                         chess_square.status = piece
+
                                     else:
                                         #removes the selection
                                         reset_click(position, piece, event)
