@@ -127,13 +127,13 @@ class chess:
             moves.append([x-1, y-2])
             return chess.find_moves(self, moves)
 
-    #class for the rucks
-    class ruck:
+    #class for the rooks
+    class rook:
         def __init__(self, color, position):
-            chess.__init__(self, color, position, "ruck")
+            chess.__init__(self, color, position, "rook")
         
-        #takes in the current square coordinates the ruck is in
-        #returns the coordinates of the chessboard squares the ruck can move to
+        #takes in the current square coordinates the rook is in
+        #returns the coordinates of the chessboard squares the rook can move to
         def moves(self, x, y):    
             moves = []
             for i in range (-7, 8):
@@ -157,15 +157,14 @@ class chess:
                 z = -1
             
             moves = [[x+1, y+z], [x, y+z], [x-1, y+z]]
-
+            filtered = chess.find_moves(self, moves)
+            moves = []
             #filtering out the diagonal moves so that the pawn can be placed only on a diagonal block spot if there is another chess piece there
-            diagonal = [moves[0], moves[2]]
-            for i in range (0, 2):
-                if chessboard[diagonal[i][0]][diagonal[i][1]].status == "empty":
-                    moves.remove(diagonal[i])
+            for i in range (0, len(filtered)):
+                if chessboard[filtered[i][0]][filtered[i][1]].status != "empty" or filtered[i][0] == x:
+                    moves.append(filtered[i])
+            return moves
             
-            return chess.find_moves(self, moves)
-
 #function that loads the chess pieces
 def load_chess_piece(name):
     image = pygame.image.load(name)
@@ -189,7 +188,7 @@ def set_up():
         for i in range (0,2):
             chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
             chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            chessboard[pos[4+j]][y].status = chess.ruck(colors[x], chessboard[pos[4+j]][y])
+            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
