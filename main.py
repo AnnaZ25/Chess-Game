@@ -156,13 +156,18 @@ class chess:
             else:
                 z = 1
             
-            moves = [[x+1, y+z], [x, y+z], [x-1, y+z]]
-            filtered = chess.find_moves(self, moves)
+            moves_unfiltered = [[x+1, y+z], [x, y+z], [x-1, y+z]]
             moves = []
             #filtering out the diagonal moves so that the pawn can be placed only on a diagonal block spot if there is another chess piece there
-            for i in range (0, len(filtered)):
-                if chessboard[filtered[i][0]][filtered[i][1]].status != "empty" or filtered[i][0] == x:
-                    moves.append(filtered[i])
+            #filtering out the forward move so that a chess piece can only move forward if the chessboard square is empty
+            for i in range (0, len(moves_unfiltered)):
+                #checking whether the square coordinates are within the existing range of square coordinates
+                if moves_unfiltered[i][0] >= 0 and moves_unfiltered[i][0] <= 7 and moves_unfiltered[i][1] >= 0 and moves_unfiltered[i][1] <= 7:
+                    if chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status != "empty" and moves_unfiltered[i][0] != x:
+                        moves.append(moves_unfiltered[i])
+                    elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] == x:
+                        moves.append(moves_unfiltered[i])
+            print(moves)
             return moves
             
 #function that loads the chess pieces
