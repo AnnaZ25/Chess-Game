@@ -1,5 +1,4 @@
 #importing pygame
-from re import A
 import pygame
 
 #initialising the window and configuring its details
@@ -85,7 +84,10 @@ class chess:
                     available_moves.append(moves[i])
         return available_moves
 
+    #procedure that performs castling
+    #works for both when the rook and the king are the first to be selected.
     def castling(self, special_moves, clicked, other_piece):
+            #decides which side of the chessboard the castling will be done and decides two new chessboard squares for the chess pieces
             if special_moves[2] == "r":
                 new_pos = chessboard[6][clicked[1]]
                 new_pos2 = chessboard[5][clicked[1]]
@@ -93,24 +95,36 @@ class chess:
                 new_pos = chessboard[2][clicked[1]]
                 new_pos2 = chessboard[3][clicked[1]]
             
+            #checks which piece is a rook and which is a king
             if isinstance(other_piece, chess.rook):
                 rook = other_piece
                 king = self
+                #erases the spot the king/rook was initially moved to (in this case the rook)
+                canvas.blit(background, king.rect, king.rect)
             else:
                 rook = self
                 king = other_piece
+                #erases the spot the king/rook was initially moved to (in this case the king)
+                canvas.blit(background, rook.rect, rook.rect)
             other_piece.moved = True
 
-            canvas.blit(background, king.rect, king.rect) 
-            canvas.blit(background, rook.rect, rook.rect)
+            #loads the king's image onto its new position on the board
+            #moves the king's rect and centre rect to this chessboard square as well
             canvas.blit(king.img, new_pos.rect)
             king.rect = king.rect.move(-king.rect[0]+new_pos.rect[0], -king.rect[1]+new_pos.rect[1])
             king.rect_centre = king.rect_centre.move(-king.rect_centre[0]+king.rect[0]+35, -king.rect_centre[1]+king.rect[1]+35)
+            #updates the new position chessboard square status to contain the king
             new_pos.status = king
+
+            #loads the rook's image onto its new position on the board
+            #moves the rook's rect and centre rect to this chessboard square as well
             canvas.blit(rook.img, new_pos2.rect)
             rook.rect = rook.rect.move(-rook.rect[0]+new_pos2.rect[0], -rook.rect[1]+new_pos2.rect[1])
             rook.rect_centre = rook.rect_centre.move(-rook.rect_centre[0]+rook.rect[0]+35, -rook.rect_centre[1]+rook.rect[1]+35)
+            #updates the new position chessboard square status to contain the rook
             new_pos2.status = rook
+            
+            #sets the chessboard square status where the king/rook was before to 'empty'
             chess_square.status = "empty"
 
     #class for the kings
@@ -129,20 +143,30 @@ class chess:
             
             moves = chess.find_moves(self, moves)
 
+            #checks whether the king has been moved before
             if self.moved == False:
                 row = []
                 for i in range(-4, 4):
                     row.append([x+i, y])
+                #checks whether there is no chess piece between the king and the piece at the right end of the chessboard (also checks whether there is a piece at the last position of the row)
                 if chessboard[row[5][0]][row[5][1]].status == "empty" and chessboard[row[6][0]][row[6][1]].status == "empty" and chessboard[row[7][0]][row[7][1]].status != "empty":
+                    #checks whether the last piece is a rook and whether it has not been moved before
                     if isinstance(chessboard[row[7][0]][row[7][1]].status, chess.rook):
                         if not chessboard[row[7][0]][row[7][1]].status.moved:
+                            #appends the chessboard square coordinates of the last piece and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
                             special_moves.append(["castling", row[7], "r"])
+                            #appends the chessboard square coordinates of the last piece to the list 'moves'
                             moves.append(row[7])
+                #checks whether there is no chess piece between the king and the piece at the left end of the chessboard (also checks whether there is a piece at the first position of the row)
                 if chessboard[row[2][0]][row[2][1]].status == "empty" and chessboard[row[2][0]][row[2][1]].status == "empty" and chessboard[row[3][0]][row[3][1]].status and chessboard[row[0][0]][row[0][1]].status != "empty":
+                    #checks whether the first piece is a rook and whether it has not been moved before
                     if isinstance(chessboard[row[0][0]][row[0][1]].status, chess.rook):
                         if not chessboard[row[0][0]][row[0][1]].status.moved:
+                            #appends the chessboard square coordinates of the first piece and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
                             special_moves.append(["castling", row[0], "l"])
+                            #appends the chessboard square coordinates of the first piece to the list 'moves'
                             moves.append(row[0])
+
             return moves
 
     #class for the queens
@@ -218,20 +242,29 @@ class chess:
 
             moves = chess.find_moves(self, moves)
 
+            #checks whether the rook has been moved before
             if self.moved == False:
+                #checks whether the rook is the last one in the row, or the first one in the row
                 if x == 7:
+                    #checks whether there is no chess piece between the rook and the piece on the 4th position of the chessboard row (also checks whether there is a piece at this position)
                     if chessboard[6][y].status == "empty" and chessboard[5][y].status == "empty" and chessboard[4][y].status != "empty":
+                        #checks whether the piece on the 4th position of the chessboard row is a  is a king and whether it has not been moved before
                         if isinstance(chessboard[4][y].status, chess.king):
                             if not chessboard[4][y].status.moved:
+                                #appends the chessboard square coordinates of the king and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
                                 special_moves.append(["castling", [4, y], "r"])
+                                #appends the chessboard square coordinates of the king to the list 'moves'
                                 moves.append([4, y])
                 elif x == 0:
+                    #checks whether there is no chess piece between the rook and the piece on the 4th position of the chessboard row (also checks whether there is a piece at this position)
                     if chessboard[1][y].status == "empty" and chessboard[2][y].status == "empty" and chessboard[3][y].status and chessboard[4][y].status != "empty":
+                        #checks whether the piece on the 4th position of the chessboard row is a king and whether it has not been moved before
                         if isinstance(chessboard[4][y].status, chess.king):
                             if not chessboard[4][y].status.moved:
+                                #appends the chessboard square coordinates of the king and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
                                 special_moves.append(["castling", [4, y], "l"])
+                                #appends the chessboard square coordinates of the king to the list 'moves'
                                 moves.append([4, y])
-
    
             return moves
         
@@ -550,12 +583,15 @@ while not exit:
                                         found = True
                                 
                                 if found:
-                                #checks whether the special move is a pawn promotion
-                                #if so, calls the subroutine promote() to promote the pawn 
+                                    #checks whether the special move is a pawn promotion
+                                    #if so, calls the subroutine promote() to promote the pawn 
                                     if special_moves[i][0] == "pawn promote":
                                         piece.promote(chess_square)
+                                    #checks whether the special move is a castling move
+                                    #if so, calls the subroutine castling() to perform the castling   
                                     if special_moves[i][0] == "castling":
                                         chess.castling(piece, special_moves[i], potential_x_y_click, old_piece)
+                                        
                             piece.moved = True 
 
                         else:
