@@ -56,6 +56,7 @@ class chess:
         self.color = color
         chess_pieces.append(self)
         position = square.rect
+        self.moved = False
         #loading the object's image
         file_name = self.color + type + ".png"
         self.img = load_chess_piece(file_name)
@@ -87,7 +88,28 @@ class chess:
     class king:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "king")
-        
+
+        def castling(self, special_moves, clicked, rook):
+            if special_moves[2] == "r":
+                new_pos = chessboard[6][clicked[1]]
+                new_pos2 = chessboard[5][clicked[1]]
+            else:
+                new_pos = chessboard[2][clicked[1]]
+                new_pos2 = chessboard[3][clicked[1]]
+
+            canvas.blit(background, self.rect, self.rect) 
+            canvas.blit(self.img, new_pos.rect)
+            self.rect = self.rect.move(-self.rect[0]+new_pos.rect[0], -self.rect[1]+new_pos.rect[1])
+            self.rect_centre = self.rect_centre.move(-self.rect_centre[0]+self.rect[0]+35, -self.rect_centre[1]+self.rect[1]+35)
+            new_pos.status = self
+            canvas.blit(rook.img, new_pos2.rect)
+            rook.rect = rook.rect.move(-rook.rect[0]+new_pos2.rect[0], -rook.rect[1]+new_pos2.rect[1])
+            rook.rect_centre = rook.rect_centre.move(-rook.rect_centre[0]+rook.rect[0]+35, -rook.rect_centre[1]+rook.rect[1]+35)
+            new_pos2.status = rook
+            chess_square.status = "empty"
+            
+            
+
         #takes in the current square coordinates the king is in
         #returns the coordinates of the chessboard squares the king can move to
         def moves(self, x, y):
@@ -96,7 +118,24 @@ class chess:
                 for j in range (-1, 2):
                     moves.append([x+j, y+i])
             moves.remove([x, y])
-            return chess.find_moves(self, moves)
+            
+            moves = chess.find_moves(self, moves)
+
+            if self.moved == False:
+                row = []
+                for i in range(-4, 4):
+                    row.append([x+i, y])
+                if chessboard[row[5][0]][row[5][1]].status == "empty" and chessboard[row[6][0]][row[6][1]].status == "empty" and chessboard[row[7][0]][row[7][1]].status != "empty":
+                    if isinstance(chessboard[row[7][0]][row[7][1]].status, chess.rook):
+                        if not chessboard[row[7][0]][row[7][1]].status.moved:
+                            special_moves.append(["castling", row[7], "r"])
+                            moves.append(row[7])
+                if chessboard[row[2][0]][row[2][1]].status == "empty" and chessboard[row[2][0]][row[2][1]].status == "empty" and chessboard[row[3][0]][row[3][1]].status and chessboard[row[0][0]][row[0][1]].status != "empty":
+                    if isinstance(chessboard[row[0][0]][row[0][1]].status, chess.rook):
+                        if not chessboard[row[0][0]][row[0][1]].status.moved:
+                            special_moves.append(["castling", row[0], "l"])
+                            moves.append(row[0])
+            return moves
 
     #class for the queens
     class queen:
@@ -242,7 +281,7 @@ class chess:
                                 #sets promoted to True to end the loop 
                                 promoted = True
                                 found = True
-                        #if the 'MOUSeBUTTONDOWN' event not found to collide with one of the choices' rect then the cursor is changed back to an arrow
+                        #if the 'MOUSEBUTTONDOWN' event not found to collide with one of the choices' rect then the cursor is changed back to an arrow
                         if not found:
                             #changes the cursor to a arrow
                             pygame.mouse.set_cursor(pygame.cursors.arrow)
@@ -261,7 +300,6 @@ class chess:
             #if it hasn't, then add a 'forward by 2 squares' movement to the list moves_unfiltered
             if not self.moved:
                 moves_unfiltered.append([x, y+z*2])
-                self.moved = True
 
             moves = []
             #filtering out the diagonal moves so that the pawn can be placed only on a diagonal block spot if there is another chess piece there
@@ -306,13 +344,13 @@ def set_up():
         else:
             y = 0
             z = 1
-        #chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
+        chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
         #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
             #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
             #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            #chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
@@ -467,26 +505,32 @@ while not exit:
                             piece.rect = piece.rect.move(-piece.rect[0]+chess_square.rect[0], -piece.rect[1]+chess_square.rect[1])
                             piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+piece.rect[0]+35, -piece.rect_centre[1]+piece.rect[1]+35)
                             #updates the display
-                            pygame.display.update() 
-
-                            #sets the old chessboard square status to 'empty'
-                            chess_square_before.status = "empty"   
+                            pygame.display.update()   
 
                             #assigns the new chessboard square status to the chess piece
+                            old_piece = chess_square.status
                             chess_square.status = piece
+
+                            #sets the old chessboard square status to 'empty'
+                            chess_square_before.status = "empty" 
 
                             #checks whether the new move is a special move
                             if special_moves != []:
                                 found = False
                                 i = -1
-                                while not found and i <= len(special_moves):
+                                while not found and i <= len(special_moves)-2:
                                     i += 1
                                     if special_moves[i][1][0] == potential_x_y_click[0] and special_moves[i][1][1] == potential_x_y_click[1]:
                                         found = True
-                                #checks whether the special move is a pawn promotion
-                                #if so, calls the subroutine promote() to promote the pawn 
-                                if special_moves[i][0] == "pawn promote":
-                                    piece.promote(chess_square)
+                                
+                                if found:
+                                    #checks whether the special move is a pawn promotion
+                                    #if so, calls the subroutine promote() to promote the pawn 
+                                    if special_moves[i][0] == "pawn promote":
+                                        piece.promote(chess_square)
+                                    if special_moves[i][0] == "castling":
+                                        piece.castling(special_moves[i], potential_x_y_click, old_piece)
+                            piece.moved = True 
 
                         else:
                             #removes the selection
