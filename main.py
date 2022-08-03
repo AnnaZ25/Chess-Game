@@ -309,12 +309,6 @@ class chess:
                             if all[i].rect.collidepoint(event2.pos):
                                 #changes the cursor to a arrow
                                 pygame.mouse.set_cursor(pygame.cursors.arrow)
-                                #creates and draws a highlight around the piece to show selection
-                                highlight3 = highlight.move(all[i].rect[0]+100, all[i].rect[1]+100)
-                                pygame.draw.rect(canvas, "gray", highlight3, 5)
-                                #updates the display
-                                pygame.display.update()
-                                pygame.time.delay(500)
 
                                 #erases the pawn from its position and moves its rect out of the screen
                                 canvas.blit(background, chess_square.rect, chess_square.rect)
