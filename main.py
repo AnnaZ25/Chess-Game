@@ -1,4 +1,5 @@
 #importing pygame
+from re import A
 import pygame
 
 #initialising the window and configuring its details
@@ -84,32 +85,39 @@ class chess:
                     available_moves.append(moves[i])
         return available_moves
 
-    #class for the kings
-    class king:
-        def __init__(self, color, position):
-            chess.__init__(self, color, position, "king")
-
-        def castling(self, special_moves, clicked, rook):
+    def castling(self, special_moves, clicked, other_piece):
             if special_moves[2] == "r":
                 new_pos = chessboard[6][clicked[1]]
                 new_pos2 = chessboard[5][clicked[1]]
             else:
                 new_pos = chessboard[2][clicked[1]]
                 new_pos2 = chessboard[3][clicked[1]]
+            
+            if isinstance(other_piece, chess.rook):
+                rook = other_piece
+                king = self
+            else:
+                rook = self
+                king = other_piece
+            other_piece.moved = True
 
-            canvas.blit(background, self.rect, self.rect) 
-            canvas.blit(self.img, new_pos.rect)
-            self.rect = self.rect.move(-self.rect[0]+new_pos.rect[0], -self.rect[1]+new_pos.rect[1])
-            self.rect_centre = self.rect_centre.move(-self.rect_centre[0]+self.rect[0]+35, -self.rect_centre[1]+self.rect[1]+35)
-            new_pos.status = self
+            canvas.blit(background, king.rect, king.rect) 
+            canvas.blit(background, rook.rect, rook.rect)
+            canvas.blit(king.img, new_pos.rect)
+            king.rect = king.rect.move(-king.rect[0]+new_pos.rect[0], -king.rect[1]+new_pos.rect[1])
+            king.rect_centre = king.rect_centre.move(-king.rect_centre[0]+king.rect[0]+35, -king.rect_centre[1]+king.rect[1]+35)
+            new_pos.status = king
             canvas.blit(rook.img, new_pos2.rect)
             rook.rect = rook.rect.move(-rook.rect[0]+new_pos2.rect[0], -rook.rect[1]+new_pos2.rect[1])
             rook.rect_centre = rook.rect_centre.move(-rook.rect_centre[0]+rook.rect[0]+35, -rook.rect_centre[1]+rook.rect[1]+35)
             new_pos2.status = rook
             chess_square.status = "empty"
-            
-            
 
+    #class for the kings
+    class king:
+        def __init__(self, color, position):
+            chess.__init__(self, color, position, "king")
+            
         #takes in the current square coordinates the king is in
         #returns the coordinates of the chessboard squares the king can move to
         def moves(self, x, y):
@@ -207,8 +215,26 @@ class chess:
                 moves.append([x, y+i])
             for i in range (0, 2):
                 moves.remove([x, y])
-            return chess.find_moves(self, moves)
 
+            moves = chess.find_moves(self, moves)
+
+            if self.moved == False:
+                if x == 7:
+                    if chessboard[6][y].status == "empty" and chessboard[5][y].status == "empty" and chessboard[4][y].status != "empty":
+                        if isinstance(chessboard[4][y].status, chess.king):
+                            if not chessboard[4][y].status.moved:
+                                special_moves.append(["castling", [4, y], "r"])
+                                moves.append([4, y])
+                elif x == 0:
+                    if chessboard[1][y].status == "empty" and chessboard[2][y].status == "empty" and chessboard[3][y].status and chessboard[4][y].status != "empty":
+                        if isinstance(chessboard[4][y].status, chess.king):
+                            if not chessboard[4][y].status.moved:
+                                special_moves.append(["castling", [4, y], "l"])
+                                moves.append([4, y])
+
+   
+            return moves
+        
     #class for the pawns
     class pawn:
         def __init__(self, color, position):
@@ -524,12 +550,12 @@ while not exit:
                                         found = True
                                 
                                 if found:
-                                    #checks whether the special move is a pawn promotion
-                                    #if so, calls the subroutine promote() to promote the pawn 
+                                #checks whether the special move is a pawn promotion
+                                #if so, calls the subroutine promote() to promote the pawn 
                                     if special_moves[i][0] == "pawn promote":
                                         piece.promote(chess_square)
                                     if special_moves[i][0] == "castling":
-                                        piece.castling(special_moves[i], potential_x_y_click, old_piece)
+                                        chess.castling(piece, special_moves[i], potential_x_y_click, old_piece)
                             piece.moved = True 
 
                         else:
