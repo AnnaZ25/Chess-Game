@@ -1,4 +1,4 @@
-import imghdr
+#importing pygame
 import pygame
 
 #initialising the window and configuring its details
@@ -174,6 +174,7 @@ class chess:
     class pawn:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "pawn")
+            self.moved = False
 
         #promotes the pawn to another chess piece
         def promote(self, chess_square):
@@ -255,6 +256,13 @@ class chess:
                 z = 1
             
             moves_unfiltered = [[x+1, y+z], [x, y+z], [x-1, y+z]]
+
+            #checking whether the pawn has been moved before
+            #if it hasn't, then add a 'forward by 2 squares' movement to the list moves_unfiltered
+            if not self.moved:
+                moves_unfiltered.append([x, y+z*2])
+                self.moved = True
+
             moves = []
             #filtering out the diagonal moves so that the pawn can be placed only on a diagonal block spot if there is another chess piece there
             #filtering out the forward move so that a chess piece can only move forward if the chessboard square is empty
