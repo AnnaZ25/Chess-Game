@@ -1,4 +1,5 @@
 #importing pygame
+from numpy import asanyarray
 import pygame
 
 #initialising the window and configuring its details
@@ -38,6 +39,8 @@ class square:
         self.rect = pygame.Rect((x*65+63, y*65+63), standard)
         #determines the status of the square
         self.status = "empty"
+        self.sqr_in_check_black = False
+        self.sqr_in_check_white = False
 
 #class containing the promotion choices
 class choice:
@@ -71,7 +74,9 @@ class chess:
     #function that finds the available moves of a piece from a list of possible moves
     def find_moves(self, moves):
         available_moves = []
-        for i in range(0, len(moves)):
+        i = 0
+        length = len(moves)
+        while i < length:
             #checking whether the square coordinates are within the existing range of square coordinates
             if moves[i][0] >= 0 and moves[i][0] <= 7 and moves[i][1] >= 0 and moves[i][1] <= 7:
                 chessboard_sqr = chessboard[moves[i][0]][moves[i][1]]
@@ -82,6 +87,7 @@ class chess:
                         available_moves.append(moves[i])
                 else:
                     available_moves.append(moves[i])
+            i += 1
         return available_moves
 
     #procedure that performs castling
@@ -197,15 +203,85 @@ class chess:
         #takes in the current square coordinates the bishop is in
         #returns the coordinates of the chessboard squares the bishop can move to
         def moves(self, x, y):
+
             moves = []
+            x_diag_raw = []
+            minus_x_diag_raw = []
             for i in range (-7, 8):
-                moves.append([x+i, y-i])
-                moves.append([x-i, y+i])
-                moves.append([x+i, y+i])
-                moves.append([x-i, y-i])
-            for i in range (0, 4):
-                moves.remove([x, y])
+                x_diag_raw.append([x-i, y+i])
+                minus_x_diag_raw.append([x+i, y+i])
+            
+            
+            def check(diag):
+                diags = []
+                for i in range (0, len(diag)):
+                    if diag[i][0] >= 0 and diag[i][0] <= 7 and diag[i][1] >= 0 and diag[i][1] <= 7:
+                        diags.append(diag[i])
+                return diags
+
+            x_diag = check(x_diag_raw)
+            minus_x_diag = check(minus_x_diag_raw)
+
+
+            print(x_diag)
+            print(minus_x_diag)
+            for i in range (0, len(x_diag)):
+                pygame.draw.rect(canvas, "blue", chessboard[x_diag[i][0]][x_diag[i][1]], 3)
+            for i in range (0, len(minus_x_diag)):
+                pygame.draw.rect(canvas, "blue", chessboard[minus_x_diag[i][0]][minus_x_diag[i][1]], 3)    
+
+
+            def find_bishop_movements(moves, row_col):
+                moves1 = []
+                empty_found = False
+                i = len(row_col) - 1
+                while i > -1 and not empty_found:
+                    moves1.append(row_col[i])
+                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty":
+                        empty_found = True
+                    i -= 1
+
+                moves2 = []
+                empty_found = False
+                i = 0
+                while i < len(row_col) and not empty_found:
+                    moves2.append(row_col[i])
+                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty":
+                        empty_found = True
+                    i += 1
+
+                #print(moves1)
+                #print(moves2)
+                for i in range (0, len(moves1)):
+                    moves.append(moves1[i])
+                for i in range (0, len(moves2)):
+                    moves.append(moves2[i])
+
+                return moves
+
+            coords = [find_piece(self)[0], find_piece(self)[1]]
+            i = 0
+            length = len(x_diag)
+            while i < length:
+                if x_diag[i] == coords:
+                    x_diag.remove(x_diag[i])
+                    length = len(x_diag)
+                i += 1
+
+            i = 0
+            length = len(minus_x_diag)
+            while i < length:
+                if minus_x_diag[i] == coords:
+                    minus_x_diag.remove(minus_x_diag[i])
+                    length = len(minus_x_diag)
+                i += 1
+
+            moves = find_bishop_movements(moves, x_diag)
+            moves = find_bishop_movements(moves, minus_x_diag)
+            print("\n")
+
             return chess.find_moves(self, moves)
+            
 
     #class for the knights
     class knight:
@@ -232,14 +308,42 @@ class chess:
         
         #takes in the current square coordinates the rook is in
         #returns the coordinates of the chessboard squares the rook can move to
-        def moves(self, x, y):    
+        def moves(self, x, y): 
             moves = []
-            for i in range (-7, 8):
-                moves.append([x+i, y])
-                moves.append([x, y+i])
-            for i in range (0, 2):
-                moves.remove([x, y])
+            row = []
+            col = []
+            for i in range (0, 8):
+                row.append([i, y])
+                col.append([x, i])
 
+            def find_rook_movements(moves, row_col, coor):
+                moves1 = []
+                empty_found = False
+                i = 7
+                while i > -1 and not empty_found:
+                    moves1.append(row_col[i])
+                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i < coor:
+                        empty_found = True
+                    i -= 1
+
+                moves2 = []
+                empty_found = False
+                i = 0
+                while i < 8 and not empty_found:
+                    moves2.append(row_col[i])
+                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i > coor:
+                        empty_found = True
+                    i += 1
+
+                for i in range (0, len(moves1)):
+                    for j in range (0, len(moves2)):
+                        if moves1[i] == moves2[j]:
+                            moves.append(moves1[i])
+
+                return moves
+
+            moves = find_rook_movements(moves, row, x)
+            moves = find_rook_movements(moves, col, y)
             moves = chess.find_moves(self, moves)
 
             #checks whether the rook has been moved before
@@ -265,7 +369,6 @@ class chess:
                                 special_moves.append(["castling", [4, y], "l"])
                                 #appends the chessboard square coordinates of the king to the list 'moves'
                                 moves.append([4, y])
-   
             return moves
         
     #class for the pawns
@@ -334,6 +437,7 @@ class chess:
                                 #sets promoted to True to end the loop 
                                 promoted = True
                                 found = True
+
                         #if the 'MOUSEBUTTONDOWN' event not found to collide with one of the choices' rect then the cursor is changed back to an arrow
                         if not found:
                             #changes the cursor to a arrow
@@ -401,13 +505,13 @@ def set_up():
         #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
-            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            #chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -479,7 +583,7 @@ exit = False
 
 #mainloop
 while not exit:
-    for event in pygame.event.get():
+    for event in pygame.event.get():       
         if event.type == pygame.MOUSEBUTTONDOWN:
             found = False
             i = -1
@@ -524,11 +628,11 @@ while not exit:
                     if potential_x_y != None:
                         #the moves function is called (specific to the piece type) and the available moves that the piece can take are found
                         available_moves = piece.moves(chess_square_coords[0], chess_square_coords[1])
-                    #calls function to check potential move validity
-                    valid = valid_move(available_moves, potential_x_y)
-                    #changes the cursor to a diamond if the potential move is valid
-                    if valid:
-                        pygame.mouse.set_cursor(pygame.cursors.diamond)
+                        #calls function to check potential move validity
+                        valid = valid_move(available_moves, potential_x_y)
+                        #changes the cursor to a diamond if the potential move is valid
+                        if valid:
+                            pygame.mouse.set_cursor(pygame.cursors.diamond)
 
                     #moves the chess piece to the destination square (if the piece can be moved to it)
                     #this new square can be different than the square that the mouse was held down on in the previous section (in case the user changes their mind and clicks on a different square)
@@ -585,8 +689,43 @@ while not exit:
                                     #if so, calls the subroutine castling() to perform the castling   
                                     if special_moves[i][0] == "castling":
                                         chess.castling(piece, special_moves[i], potential_x_y_click, old_piece)
-                                        
+                                
                             piece.moved = True 
+
+
+                            """
+                            def remove_castling(available_moves, a, b):
+                                to_remove = []
+                                if isinstance(chessboard[a][b].status, chess.king) and chessboard[a][b].status.moved == False:
+                                    for i in range(0, len(available_moves)):
+                                        if available_moves[i] == [7, b]:
+                                            to_remove.append([7, b])
+                                        elif available_moves[i] == [0, b]:
+                                            to_remove.append([0, b])
+                                    for i in range (0, len(to_remove)):
+                                        available_moves.remove(to_remove[i])
+                                return available_moves
+
+                            for a in range (0, len(chessboard)):
+                                for b in range(0, len(chessboard)):
+                                    if chessboard[a][b].status != "empty":
+                                        if chessboard[a][b].status.color == "white":
+                                            available_moves = chessboard[a][b].status.moves(a, b) 
+                                            available_moves = remove_castling(available_moves, a, b)
+                                            for k in range(0, len(available_moves)):
+                                                chessboard[available_moves[k][0]][available_moves[k][1]].sqr_in_check_black = True
+                                        elif chessboard[a][b].status.color == "black":
+                                            available_moves = chessboard[a][b].status.moves(a, b) 
+                                            available_moves = remove_castling(available_moves, a, b)
+                                            for k in range(0, len(available_moves)):
+                                                chessboard[available_moves[k][0]][available_moves[k][1]].sqr_in_check_white = True
+                            
+                            for a in range(0, len(chessboard)):
+                                for b in range (0, len(chessboard)):
+                                    if chessboard[b][a].sqr_in_check_white:
+                                        #pygame.draw.rect(canvas, "gray", chessboard[b][a].rect, 10)
+                              """  
+
 
                         else:
                             #removes the selection
