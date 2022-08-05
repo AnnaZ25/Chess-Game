@@ -738,6 +738,12 @@ while not exit:
                                             #updates the chessboard square sqr_in_check_white to True because the white king would be in check on a square to which a black chess piece (except a pawn) can move to                                            
                                             chessboard[available_moves[k][0]][available_moves[k][1]].sqr_in_check_white = True
 
+                            #resets all of the chessboard squares' sqr_in_check_black or sqr_in_check_white to False
+                            for a in range (0, len(chessboard)):
+                                for b in range(0, len(chessboard)): 
+                                    chessboard[a][b].sqr_in_check_white = False
+                                    chessboard[a][b].sqr_in_check_black = False
+                                    
                             #loops through the chessboard squares and updates the chessboard square areas 'in check' (for both kings)
                             #this is done by changing the value of the chessboard square's sqr_in_check_black or sqr_in_check_white
                             for a in range (0, len(chessboard)):
