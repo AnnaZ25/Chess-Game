@@ -471,6 +471,8 @@ class chess:
                         moves.append(moves_unfiltered[i])
                     elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] == x:
                         moves.append(moves_unfiltered[i])
+                    elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] != x:
+                        special_moves.append(["in check pawn", moves_unfiltered[i]])
             
             #checks whether the pawn would undergo promotion if moved to one of the places it can move to
             #if so, appends the chessboard square coordinates of the move along with the name of the special move (pawn promotion) to the global list 'special_moves'
@@ -505,16 +507,16 @@ def set_up():
             y = 0
             z = 1
         #chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
             #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
             #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            #chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -695,40 +697,58 @@ while not exit:
                                 
                             piece.moved = True 
 
+                            #procedure that finds the areas 'in check' (for both kings) by each piece on the chessboard square
+                            #updates the chessboard square sqr_in_check_black or sqr_in_check_white to True if it is in check for the king of that particular color
+                            def find_in_check(a, b):
+                                #checks whether the chess piece is a pawn
+                                if isinstance(chessboard[a][b].status, chess.pawn):
+                                    #finds the 'in check pawn' special moves which contain the diagonal moves of the pawn 
+                                    for diag in special_moves:
+                                        if diag[0] == "in check pawn":
+                                            #checks the color of the pawn 
+                                            if chessboard[a][b].status.color == "white":
+                                                #updates the chessboard square sqr_in_check_black to True because the black king would be in check on the diagonal from the white pawn
+                                                chessboard[diag[1][0]][diag[1][1]].sqr_in_check_black = True
+                                            else:
+                                                #updates the chessboard square sqr_in_check_white to True because the white king would be in check on the diagonal from the black pawn
+                                                chessboard[diag[1][0]][diag[1][1]].sqr_in_check_white = True
+                                #if the chesspiece is not a pawn:
+                                else:
+                                    #removes the castling move if there is one (click on the king from a selected rook or click on the rook from a selected king)
+                                    to_remove = []
+                                    #checks whether the chess piece is a king and has not been moved before or if it is a rook and has not been moved before
+                                    if isinstance(chessboard[a][b].status, chess.king) and chessboard[a][b].status.moved == False or isinstance(chessboard[a][b].status, chess.rook) and chessboard[a][b].status.moved == False:
+                                        #removes any castling moves there are
+                                        for i in range(0, len(available_moves)):
+                                            if available_moves[i] == [7, b]:
+                                                to_remove.append([7, b])
+                                            elif available_moves[i] == [0, b]:
+                                                to_remove.append([0, b])
 
-                            """
-                            def remove_castling(available_moves, a, b):
-                                to_remove = []
-                                if isinstance(chessboard[a][b].status, chess.king) and chessboard[a][b].status.moved == False:
-                                    for i in range(0, len(available_moves)):
-                                        if available_moves[i] == [7, b]:
-                                            to_remove.append([7, b])
-                                        elif available_moves[i] == [0, b]:
-                                            to_remove.append([0, b])
-                                    for i in range (0, len(to_remove)):
-                                        available_moves.remove(to_remove[i])
-                                return available_moves
+                                        for i in range (0, len(to_remove)):
+                                            available_moves.remove(to_remove[i])
 
-                            for a in range (0, len(chessboard)):
-                                for b in range(0, len(chessboard)):
-                                    if chessboard[a][b].status != "empty":
+                                    #updates the chessboard square 'in check' values for each move in the available moves of the chess piece
+                                    for k in range(0, len(available_moves)):
+                                        #checks the color of the chess piece
                                         if chessboard[a][b].status.color == "white":
-                                            available_moves = chessboard[a][b].status.moves(a, b) 
-                                            available_moves = remove_castling(available_moves, a, b)
-                                            for k in range(0, len(available_moves)):
-                                                chessboard[available_moves[k][0]][available_moves[k][1]].sqr_in_check_black = True
-                                        elif chessboard[a][b].status.color == "black":
-                                            available_moves = chessboard[a][b].status.moves(a, b) 
-                                            available_moves = remove_castling(available_moves, a, b)
-                                            for k in range(0, len(available_moves)):
-                                                chessboard[available_moves[k][0]][available_moves[k][1]].sqr_in_check_white = True
-                            
-                            for a in range(0, len(chessboard)):
-                                for b in range (0, len(chessboard)):
-                                    if chessboard[b][a].sqr_in_check_white:
-                                        #pygame.draw.rect(canvas, "gray", chessboard[b][a].rect, 10)
-                              """  
+                                            #updates the chessboard square sqr_in_check_black to True because the black king would be in check on a square to which a white chess piece (except a pawn) can move to
+                                            chessboard[available_moves[k][0]][available_moves[k][1]].sqr_in_check_black = True
+                                        else:
+                                            #updates the chessboard square sqr_in_check_white to True because the white king would be in check on a square to which a black chess piece (except a pawn) can move to                                            
+                                            chessboard[available_moves[k][0]][available_moves[k][1]].sqr_in_check_white = True
 
+                            #loops through the chessboard squares and updates the chessboard square areas 'in check' (for both kings)
+                            #this is done by changing the value of the chessboard square's sqr_in_check_black or sqr_in_check_white
+                            for a in range (0, len(chessboard)):
+                                for b in range(0, len(chessboard)): 
+                                    #checks whether the chessboard square is not empty
+                                    if chessboard[a][b].status != "empty":
+                                        #finds the available moves and special moves (if there are any) of the chess piece from its current position
+                                        special_moves = []
+                                        available_moves = chessboard[a][b].status.moves(a, b)
+                                        #calls find_in_check() to find the areas in check by the chess piece and update their sqr_in_check_black or sqr_in_check_white values
+                                        find_in_check(a, b)
 
                         else:
                             #removes the selection
