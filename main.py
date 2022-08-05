@@ -1,5 +1,4 @@
 #importing pygame
-from numpy import asanyarray
 import pygame
 
 #initialising the window and configuring its details
@@ -90,6 +89,120 @@ class chess:
             i += 1
         return available_moves
 
+    #function that finds the diagonal 'bishop-like' movements of a piece (for the bishop and queen)
+    def bishop_moves(self, moves, x, y):
+        pos_x_diag_raw = []
+        pos_minus_x_diag_raw = []
+        neg_x_diag_raw = []
+        neg_minus_x_diag_raw = []
+        #finds the coordinates for the movement up till 7 squares in four different diagonal directions
+        for i in range (-7, 0):
+            pos_x_diag_raw.append([x-i, y+i])
+            pos_minus_x_diag_raw.append([x+i, y+i])
+        for j in range (0, 8):
+            neg_x_diag_raw.append([x-j, y+j])
+            neg_minus_x_diag_raw.append([x+j, y+j])
+
+        #function that checks whether each coordinate in a diagonal list of coordinates corresponds to a real chessboard square coordinate
+        def check(diag):
+            diags = []
+            for i in range (0, len(diag)):
+                if diag[i][0] >= 0 and diag[i][0] <= 7 and diag[i][1] >= 0 and diag[i][1] <= 7:
+                    diags.append(diag[i])
+            return diags
+
+        #filtering out the invalid coordinates in each diagonal
+        pos_x_diag = check(pos_x_diag_raw)
+        pos_minus_x_diag = check(pos_minus_x_diag_raw)
+        neg_x_diag = check(neg_x_diag_raw)
+        neg_minus_x_diag = check(neg_minus_x_diag_raw)
+
+        #function that moves through the diagonal from beginning to end
+        #it keeps adding the square coordinates to the list 'moves' until (and including) a chessboard square with a piece on it is reached or until the end of the diagonal list has been reached
+        #it then returns 'moves'
+        def find_bishop_movements_r(moves, diag, coor):
+            empty_found = False
+            i = len(diag)-1
+            while i >= 0 and not empty_found:
+                moves.append(diag[i])
+                if chessboard[diag[i][0]][diag[i][1]].status != "empty" and diag[i] != coor:
+                    empty_found = True
+                i -= 1
+            return moves
+
+        #function that moves through the diagonal from end to beginning
+        #it keeps adding the square coordinates to the list 'moves' until (and including) a chessboard square with a piece on it is reached or until the beginning of the diagonal list has been reached
+        #it then returns 'moves'
+        def find_bishop_movements_l(moves, diag, coor):
+            empty_found = False
+            i = 0
+            while i < len(diag) and not empty_found:
+                moves.append(diag[i])
+                if chessboard[diag[i][0]][diag[i][1]].status != "empty" and diag[i] != coor:
+                    empty_found = True
+                i += 1
+            return moves
+
+        #finds the movements the chess piece can make on each diagonal, appending them to the list 'moves'
+        moves = find_bishop_movements_r(moves, pos_minus_x_diag, [x,y])
+        moves = find_bishop_movements_l(moves, neg_minus_x_diag, [x,y])
+        moves = find_bishop_movements_r(moves, pos_x_diag, [x,y])
+        moves = find_bishop_movements_l(moves, neg_x_diag, [x,y])
+        
+        #calls find_moves() to check whether the moves can be made
+        return chess.find_moves(self, moves) 
+
+    #function that finds the horizontal and vertical 'rook-like' movements of a piece (for the rook and queen)
+    def rook_moves(self, moves, x, y):
+        row = []
+        col = []
+        #creates a list of the square coordinates in the same row as the rook
+        #creates a list of the square coordinates in the same column as the rook
+        for i in range (0, 8):
+            row.append([i, y])
+            col.append([x, i])
+
+        #function that moves through the row/column from end to beginning and from beginning to end
+        #finds the moves the rook can make on the row/column
+        def find_rook_movements(moves, row_col, coor):
+            moves1 = []
+            #runs through the row/column from beginning to end
+            #creates it keeps adding the square coordinates to the list 'moves1' until (and including) a chessboard square with a piece on it is reached or until the end of the row/column list has been reached
+            empty_found = False
+            i = 7
+            while i > -1 and not empty_found:
+                moves1.append(row_col[i])
+                if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i < coor:
+                    empty_found = True
+                i -= 1
+
+            moves2 = []
+            #runs through the row/column from end to beginning
+            #creates it keeps adding the square coordinates to the list 'moves2' until (and including) a chessboard square with a piece on it is reached or until the beginning of the row/column list has been reached
+            empty_found = False
+            i = 0
+            while i < 8 and not empty_found:
+                moves2.append(row_col[i])
+                if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i > coor:
+                    empty_found = True
+                i += 1
+            
+            #searches through the lists 'moves1' and 'moves2' and adds the coordinates that are in both lists to the list 'moves'
+            #this is so that only the square coordinates that are in between two chess pieces (or the two ends of the chessboard row/column or an end of the chessboard row/column and a chess piece) are added to the list
+            for i in range (0, len(moves1)):
+                for j in range (0, len(moves2)):
+                    if moves1[i] == moves2[j]:
+                        moves.append(moves1[i])
+
+            return moves
+
+        #finds the movements the rook can make on the row and column, appending them to the list 'moves'
+        moves = find_rook_movements(moves, row, x)
+        moves = find_rook_movements(moves, col, y)
+
+        #calls find_moves() to check whether the moves can be made
+        return chess.find_moves(self, moves)
+
     #procedure that performs castling
     #works for both when the rook and the king are the first to be selected.
     def castling(self, special_moves, clicked, other_piece):
@@ -147,6 +260,7 @@ class chess:
                     moves.append([x+j, y+i])
             moves.remove([x, y])
             
+            #calls find_moves() to check whether the moves can be made
             moves = chess.find_moves(self, moves)
 
             #checks whether the king has been moved before
@@ -184,17 +298,12 @@ class chess:
         #returns the coordinates of the chessboard squares the queen can move to
         def moves(self, x, y):
             moves = []
-            for i in range (-7, 8):
-                moves.append([x+i, y])
-                moves.append([x, y+i])
-                moves.append([x+i, y-i])
-                moves.append([x-i, y+i])
-                moves.append([x+i, y+i])
-                moves.append([x-i, y-i])
-            for i in range (0, 6):
-                moves.remove([x, y])
-            return chess.find_moves(self, moves)
-
+            #calls bishop_moves() to find the queen's diagonal movements
+            moves =  chess.bishop_moves(self, moves, x, y)
+            # #calls rook_moves() to find the queen's horizontal and vertical movements
+            #returns the queen's movements
+            return chess.rook_moves(self, moves, x, y)
+           
     #class for the bishops   
     class bishop:
         def __init__(self, color, position):
@@ -203,85 +312,9 @@ class chess:
         #takes in the current square coordinates the bishop is in
         #returns the coordinates of the chessboard squares the bishop can move to
         def moves(self, x, y):
-
             moves = []
-            x_diag_raw = []
-            minus_x_diag_raw = []
-            for i in range (-7, 8):
-                x_diag_raw.append([x-i, y+i])
-                minus_x_diag_raw.append([x+i, y+i])
-            
-            
-            def check(diag):
-                diags = []
-                for i in range (0, len(diag)):
-                    if diag[i][0] >= 0 and diag[i][0] <= 7 and diag[i][1] >= 0 and diag[i][1] <= 7:
-                        diags.append(diag[i])
-                return diags
-
-            x_diag = check(x_diag_raw)
-            minus_x_diag = check(minus_x_diag_raw)
-
-
-            print(x_diag)
-            print(minus_x_diag)
-            for i in range (0, len(x_diag)):
-                pygame.draw.rect(canvas, "blue", chessboard[x_diag[i][0]][x_diag[i][1]], 3)
-            for i in range (0, len(minus_x_diag)):
-                pygame.draw.rect(canvas, "blue", chessboard[minus_x_diag[i][0]][minus_x_diag[i][1]], 3)    
-
-
-            def find_bishop_movements(moves, row_col):
-                moves1 = []
-                empty_found = False
-                i = len(row_col) - 1
-                while i > -1 and not empty_found:
-                    moves1.append(row_col[i])
-                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty":
-                        empty_found = True
-                    i -= 1
-
-                moves2 = []
-                empty_found = False
-                i = 0
-                while i < len(row_col) and not empty_found:
-                    moves2.append(row_col[i])
-                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty":
-                        empty_found = True
-                    i += 1
-
-                #print(moves1)
-                #print(moves2)
-                for i in range (0, len(moves1)):
-                    moves.append(moves1[i])
-                for i in range (0, len(moves2)):
-                    moves.append(moves2[i])
-
-                return moves
-
-            coords = [find_piece(self)[0], find_piece(self)[1]]
-            i = 0
-            length = len(x_diag)
-            while i < length:
-                if x_diag[i] == coords:
-                    x_diag.remove(x_diag[i])
-                    length = len(x_diag)
-                i += 1
-
-            i = 0
-            length = len(minus_x_diag)
-            while i < length:
-                if minus_x_diag[i] == coords:
-                    minus_x_diag.remove(minus_x_diag[i])
-                    length = len(minus_x_diag)
-                i += 1
-
-            moves = find_bishop_movements(moves, x_diag)
-            moves = find_bishop_movements(moves, minus_x_diag)
-            print("\n")
-
-            return chess.find_moves(self, moves)
-            
+            #calls bishop_moves() to find the bishop's moves
+            return chess.bishop_moves(self, moves, x, y)    
 
     #class for the knights
     class knight:
@@ -299,6 +332,8 @@ class chess:
             moves.append([x+2, y+1])
             moves.append([x-2, y-1])
             moves.append([x-1, y-2])
+
+            #calls find_moves() to check whether the moves can be made
             return chess.find_moves(self, moves)
 
     #class for the rooks
@@ -310,42 +345,9 @@ class chess:
         #returns the coordinates of the chessboard squares the rook can move to
         def moves(self, x, y): 
             moves = []
-            row = []
-            col = []
-            for i in range (0, 8):
-                row.append([i, y])
-                col.append([x, i])
-
-            def find_rook_movements(moves, row_col, coor):
-                moves1 = []
-                empty_found = False
-                i = 7
-                while i > -1 and not empty_found:
-                    moves1.append(row_col[i])
-                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i < coor:
-                        empty_found = True
-                    i -= 1
-
-                moves2 = []
-                empty_found = False
-                i = 0
-                while i < 8 and not empty_found:
-                    moves2.append(row_col[i])
-                    if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i > coor:
-                        empty_found = True
-                    i += 1
-
-                for i in range (0, len(moves1)):
-                    for j in range (0, len(moves2)):
-                        if moves1[i] == moves2[j]:
-                            moves.append(moves1[i])
-
-                return moves
-
-            moves = find_rook_movements(moves, row, x)
-            moves = find_rook_movements(moves, col, y)
-            moves = chess.find_moves(self, moves)
-
+            #calls rook_moves() to find the rook's moves
+            moves = chess.rook_moves(self, moves, x, y)
+           
             #checks whether the rook has been moved before
             if self.moved == False:
                 #checks whether the rook is the last one in the row, or the first one in the row
@@ -369,6 +371,7 @@ class chess:
                                 special_moves.append(["castling", [4, y], "l"])
                                 #appends the chessboard square coordinates of the king to the list 'moves'
                                 moves.append([4, y])
+
             return moves
         
     #class for the pawns
@@ -501,13 +504,13 @@ def set_up():
         else:
             y = 0
             z = 1
-        chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        #chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
+        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
-            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            #chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
