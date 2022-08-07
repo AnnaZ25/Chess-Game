@@ -71,7 +71,7 @@ class chess:
         self.rect_centre = pygame.Rect(self.rect[0]+35, self.rect[1]+35, 1, 1)
 
     #function that finds the available moves of a piece from a list of possible moves
-    def find_moves(self, moves):
+    def find_moves(self, moves, special_moves):
         available_moves = []
         i = 0
         length = len(moves)
@@ -84,10 +84,14 @@ class chess:
                 if chessboard_sqr.status != "empty":
                     if chessboard_sqr.status.color != self.color and not isinstance(chessboard_sqr.status, chess.king):
                         available_moves.append(moves[i])
+                    #if the chess piece on the chessboard is a king of the opposite color, the king will be in check
+                    #the 'King in Check' statement along with the coordinates of the chessboard square the king is on are added to the 'special_moves' list
+                    elif chessboard_sqr.status.color != self.color and isinstance(chessboard_sqr.status, chess.king):
+                        special_moves.append(["King in Check", moves[i]])
                 else:
                     available_moves.append(moves[i])
             i += 1
-        return available_moves
+        return available_moves, special_moves
 
     #function that finds the diagonal 'bishop-like' movements of a piece (for the bishop and queen)
     def bishop_moves(self, moves, x, y):
@@ -150,7 +154,7 @@ class chess:
         moves = find_bishop_movements_l(moves, neg_x_diag, [x,y])
         
         #calls find_moves() to check whether the moves can be made
-        return chess.find_moves(self, moves) 
+        return chess.find_moves(self, moves, special_moves) 
 
     #function that finds the horizontal and vertical 'rook-like' movements of a piece (for the rook and queen)
     def rook_moves(self, moves, x, y):
@@ -201,7 +205,7 @@ class chess:
         moves = find_rook_movements(moves, col, y)
 
         #calls find_moves() to check whether the moves can be made
-        return chess.find_moves(self, moves)
+        return chess.find_moves(self, moves, special_moves)
 
     #procedure that performs castling
     #works for both when the rook and the king are the first to be selected.
@@ -253,7 +257,7 @@ class chess:
             
         #takes in the current square coordinates the king is in
         #returns the coordinates of the chessboard squares the king can move to
-        def moves(self, x, y):
+        def moves(self, x, y, special_moves):
             moves = []
             for i in range (-1, 2):
                 for j in range (-1, 2):
@@ -261,7 +265,10 @@ class chess:
             moves.remove([x, y])
             
             #calls find_moves() to check whether the moves can be made
-            moves = chess.find_moves(self, moves)
+            moves_and_special_moves = chess.find_moves(self, moves, special_moves)
+            moves = moves_and_special_moves[0]
+            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
+            special_moves = moves_and_special_moves[1]
 
             #finds the 'in check' status of the chessboard square the king is on for the king's color
             if self.color == "white":
@@ -303,8 +310,8 @@ class chess:
                             special_moves.append(["castling", [0, y], "l"])
                             #appends the chessboard square coordinates of the first piece to the list 'moves'
                             moves.append([0, y])
-
-            return moves
+            
+            return moves, special_moves
 
     #class for the queens
     class queen:
@@ -313,13 +320,21 @@ class chess:
 
         #takes in the current square coordinates the queen is in
         #returns the coordinates of the chessboard squares the queen can move to
-        def moves(self, x, y):
+        def moves(self, x, y, special_moves):
             moves = []
             #calls bishop_moves() to find the queen's diagonal movements
-            moves =  chess.bishop_moves(self, moves, x, y)
+            moves_and_special_moves =  chess.bishop_moves(self, moves, x, y)
+            moves = moves_and_special_moves[0]
+            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
+            special_moves = moves_and_special_moves[1]
             # #calls rook_moves() to find the queen's horizontal and vertical movements
-            #returns the queen's movements
-            return chess.rook_moves(self, moves, x, y)
+            moves_and_special_moves = chess.rook_moves(self, moves, x, y)
+            moves = moves_and_special_moves[0]
+            #appends the special moves (the check) returned from the find_moves() function to the list 'special_moves' 
+            special_moves.append(moves_and_special_moves[1])
+
+            #returns the queen's movements and special_moves
+            return moves, special_moves
            
     #class for the bishops   
     class bishop:
@@ -328,10 +343,14 @@ class chess:
 
         #takes in the current square coordinates the bishop is in
         #returns the coordinates of the chessboard squares the bishop can move to
-        def moves(self, x, y):
+        def moves(self, x, y, special_moves):
             moves = []
             #calls bishop_moves() to find the bishop's moves
-            return chess.bishop_moves(self, moves, x, y)    
+            moves_and_special_moves = chess.bishop_moves(self, moves, x, y) 
+            moves = moves_and_special_moves[0]
+            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
+            special_moves = moves_and_special_moves[1] 
+            return moves, special_moves
 
     #class for the knights
     class knight:
@@ -340,7 +359,7 @@ class chess:
 
         #takes in the current square coordinates the knight is in
         #returns the coordinates of the chessboard squares the knight can move to
-        def moves(self, x, y):
+        def moves(self, x, y, special_moves):
             moves = []
             for i in range (-2, 0):
                 moves.append([x+i, y+3+i]) 
@@ -351,7 +370,11 @@ class chess:
             moves.append([x-1, y-2])
 
             #calls find_moves() to check whether the moves can be made
-            return chess.find_moves(self, moves)
+            moves_and_special_moves = chess.find_moves(self, moves, special_moves)
+            moves = moves_and_special_moves[0]
+            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
+            special_moves = moves_and_special_moves[1]
+            return moves, special_moves
 
     #class for the rooks
     class rook:
@@ -360,10 +383,14 @@ class chess:
         
         #takes in the current square coordinates the rook is in
         #returns the coordinates of the chessboard squares the rook can move to
-        def moves(self, x, y): 
+        def moves(self, x, y, special_moves): 
             moves = []
             #calls rook_moves() to find the rook's moves
-            moves = chess.rook_moves(self, moves, x, y)
+            moves_and_special_moves = chess.rook_moves(self, moves, x, y)
+            #calls find_moves() to check whether the moves can be made
+            moves = moves_and_special_moves[0]
+            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
+            special_moves = moves_and_special_moves[1]
 
             #checks whether the rook has been moved before
             if self.moved == False:
@@ -407,7 +434,8 @@ class chess:
                                     special_moves.append(["castling", [4, y], "l"])
                                     #appends the chessboard square coordinates of the king to the list 'moves'
                                     moves.append([4, y])
-            return moves
+                    
+            return moves, special_moves
         
     #class for the pawns
     class pawn:
@@ -483,7 +511,7 @@ class chess:
             
         #takes in the current square coordinates the pawn is in
         #returns the coordinates of the chessboard squares the pawn can move to
-        def moves(self, x, y):
+        def moves(self, x, y, special_moves):
             if self.color == "white":
                 z = -1
             else:
@@ -515,7 +543,7 @@ class chess:
                 if moves[i][1] == 7 and self.color == "black" or moves[i][1] == 0 and self.color == "white":
                     special_moves.append(["pawn promote", moves[i]])
 
-            return moves
+            return moves, special_moves
             
 #function that loads the chess pieces
 def load_chess_piece(name):
@@ -623,8 +651,19 @@ exit = False
 
 #mainloop
 while not exit:
-    for event in pygame.event.get():       
+    #sets each king object to a variable
+    blackking = chessboard[4][0].status  
+    whiteking = chessboard[4][7].status  
+    for event in pygame.event.get(): 
         if event.type == pygame.MOUSEBUTTONDOWN:
+            
+            blackkingpos = find_piece(blackking)
+            whitekingpos = find_piece(whiteking)
+            if chessboard[blackkingpos[0]][blackkingpos[1]].sqr_in_check_black:
+                print("Black King is in Check")
+            if chessboard[whitekingpos[0]][whitekingpos[1]].sqr_in_check_white:
+                print("White King is in Check")
+
             found = False
             i = -1
             #looping through the list of chess pieces to identify whether a chess piece has been selected. 
@@ -666,8 +705,10 @@ while not exit:
                     potential_x_y= find_square_coords(piece.rect_centre[0], piece.rect_centre[1])
                     #if it is within a square's region, and the square is within the possible moves of the piece, the cursor is changed to a diamond
                     if potential_x_y != None:
-                        #the moves function is called (specific to the piece type) and the available moves that the piece can take are found
-                        available_moves = piece.moves(chess_square_coords[0], chess_square_coords[1])
+                        #the moves function is called (specific to the piece type) and the available moves that the piece can take are found as well as any special moves
+                        available_moves_and_special_moves = piece.moves(chess_square_coords[0], chess_square_coords[1], special_moves)
+                        available_moves = available_moves_and_special_moves[0]
+                        special_moves = available_moves_and_special_moves[1]
                         #calls function to check potential move validity
                         valid = valid_move(available_moves, potential_x_y)
                         #changes the cursor to a diamond if the potential move is valid
@@ -734,7 +775,7 @@ while not exit:
 
                             #procedure that finds the areas 'in check' (for both kings) by each piece on the chessboard square
                             #updates the chessboard square sqr_in_check_black or sqr_in_check_white to True if it is in check for the king of that particular color
-                            def find_in_check(a, b):
+                            def find_in_check(a, b, available_moves, special_moves):
                                 #checks whether the chess piece is a pawn
                                 if isinstance(chessboard[a][b].status, chess.pawn):
                                     #finds the 'in check pawn' special moves which contain the diagonal moves of the pawn 
@@ -763,6 +804,12 @@ while not exit:
                                         for i in range (0, len(to_remove)):
                                             available_moves.remove(to_remove[i])
 
+                                    #checks whether the 'special_moves' list contains any 'King in Check' statements
+                                    #this means that the chess piece is in a position where the king of the opposing color is in check
+                                    for i in range (0, len(special_moves)):
+                                        if special_moves[i][0] == "King in Check":
+                                            available_moves.append(special_moves[i][1])
+
                                     #updates the chessboard square 'in check' values for each move in the available moves of the chess piece
                                     for k in range(0, len(available_moves)):
                                         #checks the color of the chess piece
@@ -787,9 +834,11 @@ while not exit:
                                     if chessboard[a][b].status != "empty":
                                         #finds the available moves and special moves (if there are any) of the chess piece from its current position
                                         special_moves = []
-                                        available_moves = chessboard[a][b].status.moves(a, b)
+                                        available_moves_and_special_moves = chessboard[a][b].status.moves(a, b, special_moves)
+                                        available_moves = available_moves_and_special_moves[0]
+                                        special_moves = available_moves_and_special_moves[1]
                                         #calls find_in_check() to find the areas in check by the chess piece and update their sqr_in_check_black or sqr_in_check_white values
-                                        find_in_check(a, b)
+                                        find_in_check(a, b, available_moves, special_moves)
 
                         else:
                             #removes the selection
