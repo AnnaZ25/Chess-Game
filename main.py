@@ -263,29 +263,46 @@ class chess:
             #calls find_moves() to check whether the moves can be made
             moves = chess.find_moves(self, moves)
 
-            #checks whether the king has been moved before
-            if self.moved == False:
-                row = []
-                for i in range(-4, 4):
-                    row.append([x+i, y])
+            #finds the 'in check' status of the chessboard square the king is on for the king's color
+            if self.color == "white":
+                in_check = chessboard[x][y].sqr_in_check_white
+            else:
+                in_check = chessboard[x][y].sqr_in_check_black
+
+            #checks whether the king has been moved before and is not in check
+            if self.moved == False and not in_check:
+                #finds the 'in check' status (for the color of the king) for the chessboard square blocks the king would be passing through/landing on when castling
+                if self.color == "white":
+                    moving_r_1_check = chessboard[5][y].sqr_in_check_white
+                    moving_r_2_check = chessboard[6][y].sqr_in_check_white
+                    moving_l_1_check = chessboard[3][y].sqr_in_check_white
+                    moving_l_2_check = chessboard[2][y].sqr_in_check_white
+                else:
+                    moving_r_1_check = chessboard[5][y].sqr_in_check_black
+                    moving_r_2_check = chessboard[6][y].sqr_in_check_black
+                    moving_l_1_check = chessboard[3][y].sqr_in_check_black
+                    moving_l_2_check = chessboard[2][y].sqr_in_check_black
+
                 #checks whether there is no chess piece between the king and the piece at the right end of the chessboard (also checks whether there is a piece at the last position of the row)
-                if chessboard[row[5][0]][row[5][1]].status == "empty" and chessboard[row[6][0]][row[6][1]].status == "empty" and chessboard[row[7][0]][row[7][1]].status != "empty":
+                #also checks that the king will not pass through/finish at any chessboard squares under attack by an enemy piece while castling
+                if chessboard[5][y].status == "empty" and chessboard[6][y].status == "empty" and chessboard[7][y].status != "empty" and not moving_r_1_check and not moving_r_2_check:
                     #checks whether the last piece is a rook and whether it has not been moved before
-                    if isinstance(chessboard[row[7][0]][row[7][1]].status, chess.rook):
-                        if not chessboard[row[7][0]][row[7][1]].status.moved:
+                    if isinstance(chessboard[7][y].status, chess.rook):
+                        if not chessboard[7][y].status.moved:
                             #appends the chessboard square coordinates of the last piece and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
-                            special_moves.append(["castling", row[7], "r"])
+                            special_moves.append(["castling", [7, y], "r"])
                             #appends the chessboard square coordinates of the last piece to the list 'moves'
-                            moves.append(row[7])
+                            moves.append([7, y])
                 #checks whether there is no chess piece between the king and the piece at the left end of the chessboard (also checks whether there is a piece at the first position of the row)
-                if chessboard[row[2][0]][row[2][1]].status == "empty" and chessboard[row[2][0]][row[2][1]].status == "empty" and chessboard[row[3][0]][row[3][1]].status and chessboard[row[0][0]][row[0][1]].status != "empty":
+                #also checks that the king will not pass through/finish at any chessboard squares under attack by an enemy piece while castling
+                if chessboard[3][y].status == "empty" and chessboard[2][y].status == "empty" and chessboard[1][y].status == "empty" and chessboard[0][y].status != "empty" and not moving_l_1_check and not moving_l_2_check:
                     #checks whether the first piece is a rook and whether it has not been moved before
-                    if isinstance(chessboard[row[0][0]][row[0][1]].status, chess.rook):
-                        if not chessboard[row[0][0]][row[0][1]].status.moved:
+                    if isinstance(chessboard[0][y].status, chess.rook):
+                        if not chessboard[0][y].status.moved:
                             #appends the chessboard square coordinates of the first piece and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
-                            special_moves.append(["castling", row[0], "l"])
+                            special_moves.append(["castling", [0, y], "l"])
                             #appends the chessboard square coordinates of the first piece to the list 'moves'
-                            moves.append(row[0])
+                            moves.append([0, y])
 
             return moves
 
@@ -347,31 +364,49 @@ class chess:
             moves = []
             #calls rook_moves() to find the rook's moves
             moves = chess.rook_moves(self, moves, x, y)
-           
+
             #checks whether the rook has been moved before
             if self.moved == False:
-                #checks whether the rook is the last one in the row, or the first one in the row
-                if x == 7:
-                    #checks whether there is no chess piece between the rook and the piece on the 4th position of the chessboard row (also checks whether there is a piece at this position)
-                    if chessboard[6][y].status == "empty" and chessboard[5][y].status == "empty" and chessboard[4][y].status != "empty":
-                        #checks whether the piece on the 4th position of the chessboard row is a  is a king and whether it has not been moved before
-                        if isinstance(chessboard[4][y].status, chess.king):
-                            if not chessboard[4][y].status.moved:
-                                #appends the chessboard square coordinates of the king and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
-                                special_moves.append(["castling", [4, y], "r"])
-                                #appends the chessboard square coordinates of the king to the list 'moves'
-                                moves.append([4, y])
-                elif x == 0:
-                    #checks whether there is no chess piece between the rook and the piece on the 4th position of the chessboard row (also checks whether there is a piece at this position)
-                    if chessboard[1][y].status == "empty" and chessboard[2][y].status == "empty" and chessboard[3][y].status and chessboard[4][y].status != "empty":
-                        #checks whether the piece on the 4th position of the chessboard row is a king and whether it has not been moved before
-                        if isinstance(chessboard[4][y].status, chess.king):
-                            if not chessboard[4][y].status.moved:
-                                #appends the chessboard square coordinates of the king and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
-                                special_moves.append(["castling", [4, y], "l"])
-                                #appends the chessboard square coordinates of the king to the list 'moves'
-                                moves.append([4, y])
+                #checks whether there is a piece at 4th position of the row
+                if chessboard[4][y].status != "empty":
+                    #checks whether the piece on the 4th position of the chessboard row is a king and whether it has not been moved before
+                    if isinstance(chessboard[4][y].status, chess.king) and not chessboard[4][y].status.moved:
+                        #finds the 'in check' status of the chessboard square the king is on for the king's color
+                        if chessboard[4][y].status.color == "white":
+                            in_check = chessboard[4][y].sqr_in_check_white
+                        else:
+                            in_check = chessboard[4][y].sqr_in_check_black
 
+                        if not in_check:
+                            #finds the 'in check' status (for the color of the king) for the chessboard square blocks the king would be passing through/landing on when castling
+                            if self.color == "white":
+                                moving_r_1_check = chessboard[5][y].sqr_in_check_white
+                                moving_r_2_check = chessboard[6][y].sqr_in_check_white
+                                moving_l_1_check = chessboard[3][y].sqr_in_check_white
+                                moving_l_2_check = chessboard[2][y].sqr_in_check_white
+                            else:
+                                moving_r_1_check = chessboard[5][y].sqr_in_check_black
+                                moving_r_2_check = chessboard[6][y].sqr_in_check_black
+                                moving_l_1_check = chessboard[3][y].sqr_in_check_black
+                                moving_l_2_check = chessboard[2][y].sqr_in_check_black
+
+                            #checks whether the rook is the last one in the row, or the first one in the row
+                            if x == 7:
+                                #checks whether there is no chess piece between the rook and the king
+                                #also checks that the king will not pass through/finish at any chessboard squares under attack by an enemy piece while castling
+                                if chessboard[6][y].status == "empty" and chessboard[5][y].status == "empty" and not moving_r_1_check and not moving_r_2_check:
+                                    #appends the chessboard square coordinates of the king and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
+                                    special_moves.append(["castling", [4, y], "r"])
+                                    #appends the chessboard square coordinates of the king to the list 'moves'
+                                    moves.append([4, y])
+                            elif x == 0:
+                                #checks whether there is no chess piece between the rook and the king
+                                #also checks that the king will not pass through/finish at any chessboard squares under attack by an enemy piece while castling
+                                if chessboard[1][y].status == "empty" and chessboard[2][y].status == "empty" and chessboard[3][y].status and not moving_l_1_check and not moving_l_2_check:
+                                    #appends the chessboard square coordinates of the king and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
+                                    special_moves.append(["castling", [4, y], "l"])
+                                    #appends the chessboard square coordinates of the king to the list 'moves'
+                                    moves.append([4, y])
             return moves
         
     #class for the pawns
@@ -506,17 +541,17 @@ def set_up():
         else:
             y = 0
             z = 1
-        #chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
+        chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
         #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
-            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            #chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
