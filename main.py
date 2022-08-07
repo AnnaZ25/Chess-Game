@@ -258,15 +258,28 @@ class chess:
         #takes in the current square coordinates the king is in
         #returns the coordinates of the chessboard squares the king can move to
         def moves(self, x, y, special_moves):
-            moves = []
+            moves_1 = []
             for i in range (-1, 2):
                 for j in range (-1, 2):
-                    moves.append([x+j, y+i])
-            moves.remove([x, y])
-            
+                    moves_1.append([x+j, y+i])
+            moves_1.remove([x, y])
+
             #calls find_moves() to check whether the moves can be made
-            moves_and_special_moves = chess.find_moves(self, moves, special_moves)
-            moves = moves_and_special_moves[0]
+            moves_and_special_moves = chess.find_moves(self, moves_1, special_moves)
+            moves_1 = moves_and_special_moves[0]
+
+            #checks the 'in check' status (for the king's color) for the chessboard square of each possible move
+            #appends the possible moves whose chessboard squares are not under attack by an enemy piece
+            moves = []
+            for i in range (0, len(moves_1)):
+                if self.color == "white":
+                    in_check = chessboard[moves_1[i][0]][moves_1[i][1]].sqr_in_check_white
+                else:
+                    in_check = chessboard[moves_1[i][0]][moves_1[i][1]].sqr_in_check_black
+
+                if not in_check:
+                    moves.append(moves_1[i])
+
             #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
             special_moves = moves_and_special_moves[1]
 
@@ -643,6 +656,10 @@ for i in range (0, 8):
 chess_pieces = []
 set_up()
 
+#sets each king object to a variable
+blackking = chessboard[4][0].status  
+whiteking = chessboard[4][7].status  
+
 #creating the highlight rect that will be moved to select a chess piece
 highlight = pygame.Rect((-100, -100), standard)
 
@@ -651,12 +668,8 @@ exit = False
 
 #mainloop
 while not exit:
-    #sets each king object to a variable
-    blackking = chessboard[4][0].status  
-    whiteking = chessboard[4][7].status  
     for event in pygame.event.get(): 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            
             blackkingpos = find_piece(blackking)
             whitekingpos = find_piece(whiteking)
             if chessboard[blackkingpos[0]][blackkingpos[1]].sqr_in_check_black:
@@ -852,4 +865,4 @@ while not exit:
         #checking for the QUIT event and closing the window if needed 
         if event.type == pygame.QUIT:
             exit = True
-    pygame.display.update()
+    pygame.display.update()  
