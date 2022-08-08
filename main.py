@@ -392,12 +392,12 @@ class chess:
         def moves(self, x, y, special_moves):
             moves = []
             #calls bishop_moves() to find the queen's diagonal movements
-            moves_and_special_moves =  chess.bishop_moves(self, moves, x, y)
+            moves_and_special_moves =  chess.bishop_moves(self, moves, x, y, special_moves)
             moves = moves_and_special_moves[0]
             #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
             special_moves = moves_and_special_moves[1]
             # #calls rook_moves() to find the queen's horizontal and vertical movements
-            moves_and_special_moves = chess.rook_moves(self, moves, x, y)
+            moves_and_special_moves = chess.rook_moves(self, moves, x, y, special_moves)
             moves = moves_and_special_moves[0]
             #appends the special moves (the check) returned from the find_moves() function to the list 'special_moves' 
             special_moves.append(moves_and_special_moves[1])
@@ -511,7 +511,7 @@ class chess:
     class pawn:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "pawn")
-            self.moved = False
+            self.enpassant = "no capture"
 
         #promotes the pawn to another chess piece
         def promote(self, chess_square):
@@ -579,6 +579,23 @@ class chess:
                             #changes the cursor to a arrow
                             pygame.mouse.set_cursor(pygame.cursors.arrow)
             
+        #procedure that performs the enpassant movement by removing the pawn moved over
+        def perform_enpassant(self, move):
+            #finds the square the pawn moved over is on
+            if self.color == "white":
+                old_square = chessboard[move[0]][move[1]+1]
+            else:
+                old_square = chessboard[move[0]][move[1]-1]
+            
+            #updates the square the old pawn is on to "empty"
+            old_pawn = old_square.status
+            old_square.status == "empty"
+            
+            #erasing the old pawn and moving its rects out of the screen
+            canvas.blit(background, old_square.rect, old_square.rect)
+            old_pawn.rect = old_pawn.rect.move(-1000, -1000)
+            old_pawn.rect_centre = old_pawn.rect_centre.move(-1000, -1000)
+
         #takes in the current square coordinates the pawn is in
         #returns the coordinates of the chessboard squares the pawn can move to
         def moves(self, x, y, special_moves):
@@ -595,15 +612,30 @@ class chess:
                 moves_unfiltered.append([x, y+z*2])
 
             moves = []
-            #filtering out the diagonal moves so that the pawn can be placed only on a diagonal block spot if there is another chess piece there
-            #filtering out the forward move so that a chess piece can only move forward if the chessboard square is empty
+            
             for i in range (0, len(moves_unfiltered)):
                 #checking whether the square coordinates are within the existing range of square coordinates
                 if moves_unfiltered[i][0] >= 0 and moves_unfiltered[i][0] <= 7 and moves_unfiltered[i][1] >= 0 and moves_unfiltered[i][1] <= 7:
+                    #filtering out the diagonal moves so that the pawn can be placed only on a diagonal block spot if there is another chess piece there
                     if chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status != "empty" and moves_unfiltered[i][0] != x:
                         moves.append(moves_unfiltered[i])
-                    elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] == x:
+                        #checking whether there is a pawn on this spot
+                        if isinstance(chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status, chess.pawn):
+                            #checking whether the pawn has an enpassant status of "can be captured"
+                            if chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status.enpassant == "can be captured":
+                                #if so, the chessboard square coordinates of the square the pawn (on the diagonal spot) passed over are added to the 'moves' list
+                                moves.append([moves_unfiltered[i][0], moves_unfiltered[i][1]+z])
+                                #the coordinates are also added to the 'special_moves' list and identified as an en passant move
+                                special_moves.append(["en passant", [moves_unfiltered[i][0], moves_unfiltered[i][1]+z]])
+                    #filtering out the forward move so that a chess piece can only move forward if the chessboard square is empty
+                    elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] == x and moves_unfiltered[i][1] == y+z:
                         moves.append(moves_unfiltered[i])
+                    #filtering out the 'forward by 2' move so that a chess piece can only move forward if the chessboard square is empty
+                    elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] == x and moves_unfiltered[i][1] == y+z*2:
+                        moves.append(moves_unfiltered[i])
+                        #adding the 'can be captured en passant' move to the 'special_moves' list
+                        special_moves.append(["can be captured en passant", moves_unfiltered[i]])
+                    #adding the diagonal moves with an empty spot to the 'special_moves' list, so that we can still record those spots as 'in_check' for the opposite color than that of the pawn
                     elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] != x:
                         special_moves.append(["in check pawn", moves_unfiltered[i]])
             
@@ -639,17 +671,17 @@ def set_up():
         else:
             y = 0
             z = 1
-        chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
+        #chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
         #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
-            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            #chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -876,6 +908,7 @@ while not exit:
                             canvas.blit(piece.img, chess_square.rect)
                             piece.rect = piece.rect.move(-piece.rect[0]+chess_square.rect[0], -piece.rect[1]+chess_square.rect[1])
                             piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+piece.rect[0]+35, -piece.rect_centre[1]+piece.rect[1]+35)
+                            
                             #updates the display
                             pygame.display.update()   
 
@@ -889,28 +922,48 @@ while not exit:
                             #checks whether the new move is a special move
                             if special_moves != []:
                                 found = False
-                                i = -1
-                                while not found and i <= len(special_moves)-2:
-                                    i += 1
-                                    if special_moves[i][1][0] == potential_x_y_click[0] and special_moves[i][1][1] == potential_x_y_click[1]:
+                                a = -1
+
+                                while not found and a <= len(special_moves)-2:
+                                    a += 1
+                                    if special_moves[a][1][0] == potential_x_y_click[0] and special_moves[a][1][1] == potential_x_y_click[1]:
                                         found = True
                                 
                                 if found:
                                     #checks whether the special move is a pawn promotion
                                     #if so, calls the subroutine promote() to promote the pawn 
-                                    if special_moves[i][0] == "pawn promote":
+                                    if special_moves[a][0] == "pawn promote":
                                         piece.promote(chess_square)
+
                                     #checks whether the special move is a castling move
                                     #if so, calls the subroutine castling() to perform the castling   
-                                    if special_moves[i][0] == "castling":
-                                        chess.castling(piece, special_moves[i], potential_x_y_click, old_piece)
-                                
+                                    if special_moves[a][0] == "castling":
+                                        chess.castling(piece, special_moves[a], potential_x_y_click, old_piece)
+
+                                    #checks whether the special move is an en passant move
+                                    #if so, calls the subroutine perform_enpassant() to perform the en passant move
+                                    if special_moves[a][0] == "en passant":
+                                        piece.perform_enpassant(special_moves[a][1])
+
+                            #resets any expired en passant possiblilities by setting the en passant status of the pawn to "no capture"
+                            #an en passant move can only be carried out immediately after the pawn moves forward by 2 spaces; hence the expired en passant possibilites need to be removed
+                            for c in range (0, 8):
+                                for d in range (0, 8):
+                                    if isinstance(chessboard[c][d].status, chess.pawn):
+                                        if chessboard[c][d].status.enpassant == "can be captured":
+                                            chessboard[c][d].status.enpassant = "no capture"
+
+                            #checks whether the special move found was a "can be captured en passant" flag
+                            #if so, sets the en passant status of the pawn to "can be captured"
+                            if found:
+                                if special_moves[a][0] == "can be captured en passant":
+                                    piece.enpassant = "can be captured"
+
+                            #sets the moved status of the chess piece to True
                             piece.moved = True 
 
                             #calls update_check() to update the 'in check' status of each chessboard square for both kings
                             update_check()
-
-
 
                         else:
                             #removes the selection
