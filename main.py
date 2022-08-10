@@ -131,13 +131,17 @@ class chess:
         #it then returns 'moves'
         def find_bishop_movements_r(moves, diag, coor):
             empty_found = False
+            king_found = False
             i = len(diag)-1
             while i >= 0 and not empty_found:
                 moves.append(diag[i])
                 if chessboard[diag[i][0]][diag[i][1]].status != "empty" and diag[i] != coor:
                     empty_found = True
+                    if isinstance(chessboard[diag[i][0]][diag[i][1]].status, chess.king):
+                        king_found = True
                 i -= 1
-            return moves
+
+            return moves, king_found, i
 
         #function that moves through the diagonal from end to beginning
         #it keeps adding the square coordinates to the list 'moves' until (and including) a chessboard square with a piece on it is reached or until the beginning of the diagonal list has been reached
@@ -145,18 +149,75 @@ class chess:
         def find_bishop_movements_l(moves, diag, coor):
             empty_found = False
             i = 0
+            king_found = False
             while i < len(diag) and not empty_found:
                 moves.append(diag[i])
                 if chessboard[diag[i][0]][diag[i][1]].status != "empty" and diag[i] != coor:
                     empty_found = True
+                    if isinstance(chessboard[diag[i][0]][diag[i][1]].status, chess.king):
+                        king_found = True
                 i += 1
-            return moves
+
+            return moves, king_found, i
+
+        def find_1(diag, king_found, i):
+            if king_found:
+                next_sqr = ""
+                if i+2 < len(diag):
+                    next_sqr = chessboard[diag[i+2][0]][diag[i+2][1]]
+                
+                if next_sqr != "":
+                    if self.color == "black":
+                        next_sqr.sqr_in_check_white = True
+                    else:
+                        next_sqr.sqr_in_check_black = True
+
+                next_sqr = ""
+                if i >= 0 and i < len(diag):
+                    next_sqr = chessboard[diag[i][0]][diag[i][1]]
+                
+                if next_sqr != "":
+                    if self.color == "black":
+                        next_sqr.sqr_in_check_white = True
+                    else:
+                        next_sqr.sqr_in_check_black = True
+
+
+        def find_2(diag, king_found, i):
+            if king_found:
+                next_sqr = ""
+                if i-2 > 0:
+                    next_sqr = chessboard[diag[i-2][0]][diag[i-2][1]]
+                
+                if next_sqr != "":
+                    if self.color == "black":
+                        next_sqr.sqr_in_check_white = True
+                    else:
+                        next_sqr.sqr_in_check_black = True
+
+                next_sqr = ""
+                if i >= 0 and i < len(diag):
+                    next_sqr = chessboard[diag[i][0]][diag[i][1]]
+                
+                if next_sqr != "":
+                    if self.color == "black":
+                        next_sqr.sqr_in_check_white = True
+                    else:
+                        next_sqr.sqr_in_check_black = True
+
+
+        """add comments"""
 
         #finds the movements the chess piece can make on each diagonal, appending them to the list 'moves'
-        moves = find_bishop_movements_r(moves, pos_minus_x_diag, [x,y])
-        moves = find_bishop_movements_l(moves, neg_minus_x_diag, [x,y])
-        moves = find_bishop_movements_r(moves, pos_x_diag, [x,y])
-        moves = find_bishop_movements_l(moves, neg_x_diag, [x,y])
+        moves_and_king_found = find_bishop_movements_r(moves, pos_minus_x_diag, [x,y])
+        find_1(pos_minus_x_diag, moves_and_king_found[1], moves_and_king_found[2])
+        moves_and_king_found = find_bishop_movements_l(moves_and_king_found[0], neg_minus_x_diag, [x,y])
+        find_2(neg_minus_x_diag, moves_and_king_found[1], moves_and_king_found[2])
+        moves_and_king_found = find_bishop_movements_r(moves_and_king_found[0], pos_x_diag, [x,y])
+        find_1(pos_x_diag, moves_and_king_found[1], moves_and_king_found[2])
+        moves_and_king_found = find_bishop_movements_l(moves_and_king_found[0], neg_x_diag, [x,y])
+        find_2(neg_x_diag, moves_and_king_found[1], moves_and_king_found[2])
+        moves = moves_and_king_found[0]
 
         #calls find_moves() to check whether the moves can be made
         return chess.find_moves(self, moves, special_moves)
@@ -178,18 +239,18 @@ class chess:
             #runs through the row/column from beginning to end
             #creates it keeps adding the square coordinates to the list 'moves1' until (and including) a chessboard square with a piece on it is reached or until the end of the row/column list has been reached
             empty_found = False
-            king_found = ""
+            king_found = False
             i = 7
             while i > -1 and not empty_found:
                 moves1.append(row_col[i])
                 if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i < coor:
                     if isinstance(chessboard[row_col[i][0]][row_col[i][1]].status, chess.king):
-                        king_found = row_col[i]
+                        king_found = True
                     empty_found = True
                 i -= 1
 
             """add comments"""
-            if king_found != "":
+            if king_found:
                 next_sqr = ""
                 if type == "row" and row_col[i+1][0] > 0:
                     next_sqr = chessboard[row_col[i+1][0]-1][row_col[i+1][1]]
@@ -208,17 +269,17 @@ class chess:
             #creates it keeps adding the square coordinates to the list 'moves2' until (and including) a chessboard square with a piece on it is reached or until the beginning of the row/column list has been reached
             empty_found = False
             i = 0
-            king_found = ""
+            king_found = False
             while i < 8 and not empty_found:
                 moves2.append(row_col[i])
                 if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i > coor:
                     if isinstance(chessboard[row_col[i][0]][row_col[i][1]].status, chess.king):
-                        king_found = row_col[i]
+                        king_found = True
                     empty_found = True
                 i += 1
             
             """add comments"""
-            if king_found != "":
+            if king_found:
                 next_sqr = ""
                 if type == "row" and row_col[i-1][0] < 7:
                     next_sqr = chessboard[row_col[i-1][0]+1][row_col[i-1][1]]
@@ -884,9 +945,9 @@ def set_up():
         #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
-            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
             #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
-            chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            #chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
