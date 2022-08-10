@@ -334,6 +334,15 @@ class chess:
     
     #function which checks the 'available_moves' list passed in and returns only the movements that would not result in the king (of the same color as the piece) being in check 
     def check_check(self, current, available_moves):
+        #finds the chessboard square coordinates of the king of the same color as the piece
+        if self.color == "white":
+            kingpos = find_piece(whiteking)
+        else:
+            kingpos = find_piece(blackking)
+
+        #the chessboard square contained the king is assigned to the variable 'king_square'
+        king_square = chessboard[kingpos[0]][kingpos[1]]
+        
         #function that checks whether the chessboard square with the king (passed in) is in check for the king's color
         #returns True is it is
         def king_sqr_in_check(self, king_square):
@@ -344,53 +353,45 @@ class chess:
 
             if king_square_in_check:
                 return True
-
-        #sets the status of the chessboard square containing the piece to "empty"
-        current.status = "empty"
-        possible_moves = []
-        #checks each move in the 'available_moves' list
-        for i in range (0, len(available_moves)):
-            #assigns the value of the status of the square of a move in the list 'available_moves' to the variable 'old_piece'
-            old_piece = chessboard[available_moves[i][0]][available_moves[i][1]].status
-
-            #assigns the piece to the status of the square
-            chessboard[available_moves[i][0]][available_moves[i][1]].status = self
-                        
-            #calls update_check() to update the 'in check' values of each chessboard square
-            chess.update_check()
-
-            if self.color == "white":
-                kingpos = find_piece(whiteking)
-            elif self.color == "black":
-                kingpos = find_piece(blackking)
-
-            #the chessboard square contained the king is assigned to the variable 'king_square'
-            king_square = chessboard[kingpos[0]][kingpos[1]]
-                
-            #calls king_square_in_check() to check whether the king of the same color as the piece is in check
-            king_square_in_check = king_sqr_in_check(self, king_square)
-
-            #if the king is not in check, the move is appended to the list of possible_moves
-            #this is because the piece should never move to expose the king to an enemy pieces' attack and should be able to block an attack
-            if not king_square_in_check:
-                possible_moves.append(available_moves[i])
-
-            #the status of the chessboard square that was tested is set to the old_piece again, returing its state to the state it had before it was tested
-            chessboard[available_moves[i][0]][available_moves[i][1]].status = old_piece
             
-        #the status of the chessboard square that originally contained the chess piece is set to the chess piece again, returning its state to the state it has before it was tested
-        current.status = self
+        #checks that the piece is not a king
+        if not isinstance(self, chess.king):  
+            #sets the status of the chessboard square containing the piece to "empty"
+            current.status = "empty"
+            possible_moves = []
+            #checks each move in the 'available_moves' list
+            for i in range (0, len(available_moves)):
+                #assigns the value of the status of the square of a move in the list 'available_moves' to the variable 'old_piece'
+                old_piece = chessboard[available_moves[i][0]][available_moves[i][1]].status
+                #assigns the piece to the status of the square
+                chessboard[available_moves[i][0]][available_moves[i][1]].status = self
+                
+                #calls update_check() to update the 'in check' values of each chessboard square
+                chess.update_check()
+
+                #calls king_square_in_check() to check whether the king of the same color as the piece is in check
+                king_square_in_check = king_sqr_in_check(self, king_square)
+
+                #if the king is not in check, the move is appended to the list of possible_moves
+                #this is because the piece should never move to expose the king to an enemy pieces' attack and should be able to block an attack
+                if not king_square_in_check:
+                    possible_moves.append(available_moves[i])
+                
+                #the status of the chessboard square that was tested is set to the old_piece again, returing its state to the state it had before it was tested
+                chessboard[available_moves[i][0]][available_moves[i][1]].status = old_piece
+            #the status of the chessboard square that originally contained the chess piece is set to the chess piece again, returning its state to the state it has before it was tested
+            current.status = self
+        #if the chess piece is a king of the same color as the king in check, then the 'possible_moves' list is set to the available_moves list
+        else:
+            possible_moves = available_moves
 
         return possible_moves
         
     #procedure that checks whether the king passed in is in checkmate or stalemate
     def check_checkmate_stalemate(king):
-
-        """add comments/modify"""
         #finds the king's position and the king's possible moves and the moves the king would be able to take if the 'in check' status (for the color of the king) of the all chessboard squares was ignored
         king_pos = find_piece(king)
-        king_moves_without_in_check = king.moves(king_pos[0], king_pos[1], [])[0]
-        king_moves = chess.check_check(king, chessboard[king_pos[0]][king_pos[1]], king_moves_without_in_check)
+        king_moves = king.moves(king_pos[0], king_pos[1], [])
 
         # function that finds and returns the 'in check' status of the chessboard square containing the king for the color of the king
         def find_king_sqr(king, king_pos):
@@ -402,8 +403,7 @@ class chess:
 
         #checks whether the king has no moves but would have had moves if the 'in check' status of the all chessboard squares was ignored
         #this means that the king is completely surrounded by chessboard squares that are 'in check'
-        if king_moves == []:
-        #if king_moves == [] and king_moves_without_in_check != []:
+        if king_moves[0] == [] and king_moves[2] != []:
             #calls find_king_sqr to find the 'in check' status (for the color of the king) of the chessboard square the king is on
             king_sqr = find_king_sqr(king, king_pos)
             
@@ -434,11 +434,9 @@ class chess:
                             chess.update_check()
 
                             #finds the moves the king would have with this new positioning
-                            new_king_moves_without_in_check = king.moves(king_pos[0], king_pos[1], [])[0]
-                            #print(new_king_moves_without_in_check)
-                            new_king_moves = chess.check_check(king, chessboard[king_pos[0]][king_pos[1]], new_king_moves_without_in_check)
+                            new_king_moves = king.moves(king_pos[0], king_pos[1], [])[0]
+                            
                             #if the king can move to other chessboard square and the king was not originally in check, found is set to True and the loop is ended
-
                             if new_king_moves != [] and not king_sqr:
                                 #print(new_king_moves, chessboard[new_king_moves[0][0]][new_king_moves[0][1]].sqr_in_check_white)
                                 #print(chess.check_check(king, chessboard[king_pos[0]][king_pos[1]], new_king_moves))
@@ -530,13 +528,25 @@ class chess:
 
             #calls find_moves() to check whether the moves can be made
             moves_and_special_moves = chess.find_moves(self, moves_1, special_moves)
-            moves = moves_and_special_moves[0]
+            moves_unknown = moves_and_special_moves[0]
+            
+            #checks the 'in check' status (for the king's color) for the chessboard square of each possible move
+            #appends the possible moves whose chessboard squares are not under attack by an enemy piece
+            moves = []
+            for i in range (0, len(moves_unknown)):
+                if self.color == "white":
+                    in_check = chessboard[moves_unknown[i][0]][moves_unknown[i][1]].sqr_in_check_white
+                else:
+                    in_check = chessboard[moves_unknown[i][0]][moves_unknown[i][1]].sqr_in_check_black
+
+                if not in_check:
+                    moves.append(moves_unknown[i])
 
             #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
             special_moves = moves_and_special_moves[1]
 
             #returns the moves the king can take, the special moves, and the moves the king would be able to take if the 'in check' status (for the color of the king) of the all chessboard squares was ignored
-            return moves, special_moves
+            return moves, special_moves, moves_1
 
     #class for the queens
     class queen:
@@ -835,16 +845,16 @@ def set_up():
             y = 0
             z = 1
         chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
             chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
             chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
