@@ -444,12 +444,6 @@ class chess:
                                 #print(chess.check_check(king, chessboard[king_pos[0]][king_pos[1]], new_king_moves))
                                 found = True
 
-                            #if the king can move to other chessboard square and the king was originally in check, then the 'in check' status  of the chessboard square (for the current positioning) the king is on is found 
-                            elif new_king_moves != [] and king_sqr:
-                                # if the king is not in check in the current position, found is set to True and the loop is ended
-                                if not find_king_sqr(king, king_pos):
-                                    found = True
-
                             #the status of the chessboard square that was tested is set to the old_piece again, returing its state to the state it had before it was tested
                             chessboard[available_moves[i][0]][available_moves[i][1]].status = old_piece
 
@@ -461,7 +455,13 @@ class chess:
                     b = 0
                     a += 1
 
-            #if a chess piece that, if moved to a position, would allow the king to move to another chessboard square (that would stop the king from being in check), is not found and the king is in check, the king is in checkmate
+            #finds the 'in check' status of the chessboard square containing the king for the color of the king
+            if king.color == "white":
+                king_sqr = chessboard[king_pos[0]][king_pos[1]].sqr_in_check_white
+            else:
+                king_sqr = chessboard[king_pos[0]][king_pos[1]].sqr_in_check_black
+
+            #if a chess piece that, if moved to a position, would allow the king to move to another chessboard square is not found and the king is in check, the king is in checkmate
             if not found and king_sqr:
                 print("checkmate")
             #if a chess piece that, if moved to a position, would allow the king to move to another chessboard square is not found and the king is not check, the king is in stalemate
