@@ -173,28 +173,64 @@ class chess:
 
         #function that moves through the row/column from end to beginning and from beginning to end
         #finds the moves the rook can make on the row/column
-        def find_rook_movements(moves, row_col, coor):
+        def find_rook_movements(moves, row_col, coor, type):
             moves1 = []
             #runs through the row/column from beginning to end
             #creates it keeps adding the square coordinates to the list 'moves1' until (and including) a chessboard square with a piece on it is reached or until the end of the row/column list has been reached
             empty_found = False
+            king_found = ""
             i = 7
             while i > -1 and not empty_found:
                 moves1.append(row_col[i])
                 if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i < coor:
+                    if isinstance(chessboard[row_col[i][0]][row_col[i][1]].status, chess.king):
+                        king_found = row_col[i]
                     empty_found = True
                 i -= 1
+
+            """add comments"""
+            if king_found != "":
+                next_sqr = ""
+                if type == "row" and row_col[i+1][0] > 0:
+                    next_sqr = chessboard[row_col[i+1][0]-1][row_col[i+1][1]]
+                elif row_col[i+1][1] > 0:
+                    next_sqr = chessboard[row_col[i+1][0]][row_col[i+1][1]-1]
+                
+                if next_sqr != "":
+                    if self.color == "black":
+                        next_sqr.sqr_in_check_white = True
+                    else:
+                        next_sqr.sqr_in_check_black = True
+            
 
             moves2 = []
             #runs through the row/column from end to beginning
             #creates it keeps adding the square coordinates to the list 'moves2' until (and including) a chessboard square with a piece on it is reached or until the beginning of the row/column list has been reached
             empty_found = False
             i = 0
+            king_found = ""
             while i < 8 and not empty_found:
                 moves2.append(row_col[i])
                 if chessboard[row_col[i][0]][row_col[i][1]].status != "empty" and i > coor:
+                    if isinstance(chessboard[row_col[i][0]][row_col[i][1]].status, chess.king):
+                        king_found = row_col[i]
                     empty_found = True
                 i += 1
+            
+            """add comments"""
+            if king_found != "":
+                next_sqr = ""
+                if type == "row" and row_col[i-1][0] < 7:
+                    next_sqr = chessboard[row_col[i-1][0]+1][row_col[i-1][1]]
+                elif row_col[i-1][1] < 7:
+                    next_sqr = chessboard[row_col[i-1][0]][row_col[i-1][1]+1]
+                
+                if next_sqr != "":
+                    if self.color == "black":
+                        next_sqr.sqr_in_check_white = True
+                    else:
+                        next_sqr.sqr_in_check_black = True
+            
 
             #searches through the lists 'moves1' and 'moves2' and adds the coordinates that are in both lists to the list 'moves'
             #this is so that only the square coordinates that are in between two chess pieces (or the two ends of the chessboard row/column or an end of the chessboard row/column and a chess piece) are added to the list
@@ -206,8 +242,8 @@ class chess:
             return moves
 
         #finds the movements the rook can make on the row and column, appending them to the list 'moves'
-        moves = find_rook_movements(moves, row, x)
-        moves = find_rook_movements(moves, col, y)
+        moves = find_rook_movements(moves, row, x, "row")
+        moves = find_rook_movements(moves, col, y, "col")
 
         #calls find_moves() to check whether the moves can be made
         return chess.find_moves(self, moves, special_moves)
@@ -845,16 +881,16 @@ def set_up():
             y = 0
             z = 1
         chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
-            chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            #chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
+            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
             chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
