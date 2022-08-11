@@ -375,16 +375,19 @@ class chess:
                     for i in range (0, len(to_remove)):
                         available_moves.remove(to_remove[i])
 
-                """add comments"""
+                #checks whether the chessboard piece is a king
                 if isinstance(chessboard[a][b].status, chess.king):
-                    for i in range (0, len(available_moves)):
-                        if chessboard[a][b].status.color == "black":
-                            pos = find_piece(whiteking)
-                            moves = whiteking.moves(pos[0], pos[1], [])[0]
-                        else:
-                            pos = find_piece(blackking)
-                            moves = blackking.moves(pos[0], pos[1], [])[0]
+                    #finds the other king's position and possible movements
+                    if chessboard[a][b].status.color == "black":
+                        pos = find_piece(whiteking)
+                        moves = whiteking.moves(pos[0], pos[1], [])[0]
+                    else:
+                        pos = find_piece(blackking)
+                        moves = blackking.moves(pos[0], pos[1], [])[0]
 
+                    #compares the movements of both kings
+                    #sets the 'in check' status to True for both colors for the chessboard square's whose coordinates are in the movements lists of both kings
+                    for i in range (0, len(available_moves)):
                         for j in range (0, len(moves)):
                             sqr = chessboard[available_moves[i][0]][available_moves[i][1]]
                             if moves[j] == available_moves[i]:
@@ -942,16 +945,16 @@ def set_up():
             y = 0
             z = 1
         chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
             chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
             chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -1075,7 +1078,8 @@ while not exit:
                         available_moves_and_special_moves = piece.moves(chess_square_coords[0], chess_square_coords[1], special_moves)
                         special_moves = available_moves_and_special_moves[1]
 
-                        """add comments"""
+                        #finds and removes the castling move coordinates, so that they are not checked along with the other movements (for whether the king will be in check if it moves to the new position)
+                        #the castling move coordinates are different from the other move coordinates (and have already been checked in a different way), and so cannot be checked along with the other movements
                         castling_moves = []
                         for i in range(0, len(special_moves)):
                             if special_moves[i][0] == "castling":
@@ -1087,7 +1091,7 @@ while not exit:
                         #calls the function check_check() which checks each movement of the piece and returns only the movements that would not result in the king (of the same color as the piece) being in check 
                         available_moves = chess.check_check(piece, chess_square_before, available_moves_and_special_moves[0])
 
-                        """add comments"""
+                        #the castling move coordinates are added back to the list of moves, which have now been checked
                         for i in range (0, len(castling_moves)):
                             available_moves.append(castling_moves[i])
 
