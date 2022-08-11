@@ -358,6 +358,7 @@ class chess:
                         else:
                             #updates the chessboard square sqr_in_check_white to True because the white king would be in check on the diagonal from the black pawn
                             chessboard[diag[1][0]][diag[1][1]].sqr_in_check_white = True
+            
             #if the chesspiece is not a pawn:
             else:
                 #removes the castling move if there is one (click on the king from a selected rook or click on the rook from a selected king)
@@ -374,7 +375,7 @@ class chess:
                     for i in range (0, len(to_remove)):
                         available_moves.remove(to_remove[i])
 
-                
+                """add comments"""
                 if isinstance(chessboard[a][b].status, chess.king):
                     for i in range (0, len(available_moves)):
                         if chessboard[a][b].status.color == "black":
@@ -389,12 +390,6 @@ class chess:
                             if moves[j] == available_moves[i]:
                                 sqr.sqr_in_check_white = True
                                 sqr.sqr_in_check_black = True
-                            else:
-                                if chessboard[a][b].status.color == "black":
-                                    sqr.sqr_in_check_white = True
-                                else:
-                                    sqr.sqr_in_check_black = True
-               
                 
                 #checks whether the 'special_moves' list contains any 'King in Check' statements
                 #this means that the chess piece is in a position where the king of the opposing color is in check
@@ -424,7 +419,6 @@ class chess:
                 chessboard[a][b].sqr_in_check_white = False
                 chessboard[a][b].sqr_in_check_black = False
 
-
         #loops through the chessboard squares and updates the chessboard square areas 'in check' (for both kings)
         #this is done by changing the value of the chessboard square's sqr_in_check_black or sqr_in_check_white
         for a in range (0, len(chessboard)):
@@ -438,7 +432,6 @@ class chess:
                     special_moves = available_moves_and_special_moves[1]
 
                     #calls find_in_check() to find the areas in check by the chess piece and update their sqr_in_check_black or sqr_in_check_white values
-                    #if not isinstance(chessboard[a][b].status, chess.king):
                     find_in_check(a, b, available_moves, special_moves)
     
     #function which checks the 'available_moves' list passed in and returns only the movements that would not result in the king (of the same color as the piece) being in check 
@@ -577,14 +570,43 @@ class chess:
     class king:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "king")
+     
+        #takes in the current square coordinates the king is in
+        #returns the coordinates of the chessboard squares the king can move to
+        def moves(self, x, y, special_moves):
+            moves_1 = []
+            for i in range (-1, 2):
+                for j in range (-1, 2):
+                    moves_1.append([x+j, y+i])
+            moves_1.remove([x, y])
 
-        #function adds the castling move
-        def add_castling(self, x, y, moves, special_moves):
+            #calls find_moves() to check whether the moves can be made
+            moves_and_special_moves = chess.find_moves(self, moves_1, special_moves)
+            moves_unknown = moves_and_special_moves[0]
+
+            #checks the 'in check' status (for the king's color) for the chessboard square of each possible move
+            #appends the possible moves whose chessboard squares are not under attack by an enemy piece
+            moves = []
+            for i in range (0, len(moves_unknown)):
+                if self.color == "white":
+                    in_check = chessboard[moves_unknown[i][0]][moves_unknown[i][1]].sqr_in_check_white
+                else:
+                    in_check = chessboard[moves_unknown[i][0]][moves_unknown[i][1]].sqr_in_check_black
+
+                if not in_check:
+                    moves.append(moves_unknown[i])
+
+            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
+            special_moves = moves_and_special_moves[1]
+
             #finds the 'in check' status of the chessboard square the king is on for the king's color
             if self.color == "white":
                 in_check = chessboard[x][y].sqr_in_check_white
             else:
                 in_check = chessboard[x][y].sqr_in_check_black
+
+
+            #adds the castling move
 
             #checks whether the king has been moved before and is not in check
             if self.moved == False and not in_check:
@@ -620,36 +642,6 @@ class chess:
                             special_moves.append(["castling", [0, y], "l"])
                             #appends the chessboard square coordinates of the first piece to the list 'moves'
                             moves.append([0, y])
-
-            return moves, special_moves
-     
-        #takes in the current square coordinates the king is in
-        #returns the coordinates of the chessboard squares the king can move to
-        def moves(self, x, y, special_moves):
-            moves_1 = []
-            for i in range (-1, 2):
-                for j in range (-1, 2):
-                    moves_1.append([x+j, y+i])
-            moves_1.remove([x, y])
-
-            #calls find_moves() to check whether the moves can be made
-            moves_and_special_moves = chess.find_moves(self, moves_1, special_moves)
-            moves_unknown = moves_and_special_moves[0]
-
-            #checks the 'in check' status (for the king's color) for the chessboard square of each possible move
-            #appends the possible moves whose chessboard squares are not under attack by an enemy piece
-            moves = []
-            for i in range (0, len(moves_unknown)):
-                if self.color == "white":
-                    in_check = chessboard[moves_unknown[i][0]][moves_unknown[i][1]].sqr_in_check_white
-                else:
-                    in_check = chessboard[moves_unknown[i][0]][moves_unknown[i][1]].sqr_in_check_black
-
-                if not in_check:
-                    moves.append(moves_unknown[i])
-
-            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
-            special_moves = moves_and_special_moves[1]
 
             #returns the moves the king can take, the special moves, and the moves the king would be able to take if the 'in check' status (for the color of the king) of the all chessboard squares was ignored
             return moves, special_moves, moves_1
@@ -725,9 +717,20 @@ class chess:
     class rook:
         def __init__(self, color, position):
             chess.__init__(self, color, position, "rook")
+        
+        #takes in the current square coordinates the rook is in
+        #returns the coordinates of the chessboard squares the rook can move to
+        def moves(self, x, y, special_moves): 
+            moves = []
+            #calls rook_moves() to find the rook's moves
+            moves_and_special_moves = chess.rook_moves(self, moves, x, y, special_moves)
+            #calls find_moves() to check whether the moves can be made
+            moves = moves_and_special_moves[0]
+            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
+            special_moves = moves_and_special_moves[1]
 
-        #function adds the castling move
-        def add_castling(self, x, y, moves, special_moves):
+            #adds the castling move
+
             #checks whether the rook has been moved before
             if self.moved == False:
                 #checks whether there is a piece at 4th position of the row
@@ -762,28 +765,16 @@ class chess:
                                     special_moves.append(["castling", [4, y], "r"])
                                     #appends the chessboard square coordinates of the king to the list 'moves'
                                     moves.append([4, y])
+
                             elif x == 0:
                                 #checks whether there is no chess piece between the rook and the king
                                 #also checks that the king will not pass through/finish at any chessboard squares under attack by an enemy piece while castling
-                                if chessboard[1][y].status == "empty" and chessboard[2][y].status == "empty" and chessboard[3][y].status and not moving_l_1_check and not moving_l_2_check:
+                                if chessboard[1][y].status == "empty" and chessboard[2][y].status == "empty" and chessboard[3][y].status == "empty" and not moving_l_1_check and not moving_l_2_check:
                                     #appends the chessboard square coordinates of the king and the name of the special movement along with the identification of the side of the chessboard to the list 'special_moves'
                                     special_moves.append(["castling", [4, y], "l"])
                                     #appends the chessboard square coordinates of the king to the list 'moves'
                                     moves.append([4, y])
 
-            return moves, special_moves
-        
-        #takes in the current square coordinates the rook is in
-        #returns the coordinates of the chessboard squares the rook can move to
-        def moves(self, x, y, special_moves): 
-            moves = []
-            #calls rook_moves() to find the rook's moves
-            moves_and_special_moves = chess.rook_moves(self, moves, x, y, special_moves)
-            #calls find_moves() to check whether the moves can be made
-            moves = moves_and_special_moves[0]
-            #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
-            special_moves = moves_and_special_moves[1]
-                    
             return moves, special_moves
         
     #class for the pawns
@@ -1083,18 +1074,22 @@ while not exit:
                         #the moves function is called (specific to the piece type) and the available moves that the piece can take are found as well as any special moves
                         available_moves_and_special_moves = piece.moves(chess_square_coords[0], chess_square_coords[1], special_moves)
                         special_moves = available_moves_and_special_moves[1]
+
+                        """add comments"""
+                        castling_moves = []
+                        for i in range(0, len(special_moves)):
+                            if special_moves[i][0] == "castling":
+                                castling_moves.append(special_moves[i][1])
+
+                        for i in range (0, len(castling_moves)):
+                            available_moves_and_special_moves[0].remove(castling_moves[i])
                         
                         #calls the function check_check() which checks each movement of the piece and returns only the movements that would not result in the king (of the same color as the piece) being in check 
                         available_moves = chess.check_check(piece, chess_square_before, available_moves_and_special_moves[0])
-                        
-                        #checks whether the piece is a king or a rook, if so, calls the 'add_castling' subroutine for the particular chess piece to add the castling option if applicable
-                        if isinstance(piece, chess.king) or isinstance(piece, chess.rook):
-                            if isinstance(piece, chess.king):
-                                available_moves_and_special_moves = chess.king.add_castling(piece, chess_square_coords[0], chess_square_coords[1], available_moves, special_moves)
-                            else:
-                                available_moves_and_special_moves = chess.rook.add_castling(piece, chess_square_coords[0], chess_square_coords[1], available_moves, special_moves)
-                            available_moves = available_moves_and_special_moves[0]
-                            special_moves = available_moves_and_special_moves[1]
+
+                        """add comments"""
+                        for i in range (0, len(castling_moves)):
+                            available_moves.append(castling_moves[i])
 
                         #calls function to check potential move validity
                         valid = valid_move(available_moves, potential_x_y)
@@ -1181,7 +1176,7 @@ while not exit:
                                         piece.enpassant = "can be captured"
 
                             #sets the moved status of the chess piece to True
-                            piece.moved = True 
+                            piece.moved = True
 
                             #calls update_check() to update the 'in check' status of each chessboard square for both kings
                             chess.update_check()
