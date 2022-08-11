@@ -177,8 +177,8 @@ class chess:
                 if i-2 > 0:
                     next_sqr = chessboard[diag[i-2][0]][diag[i-2][1]]
             
-            #calls set_in_check, to set check chessboard square and set it's 'in check' value
-            set_in_check(next_sqr, diag)
+                #calls set_in_check, to set check chessboard square and set it's 'in check' value
+                set_in_check(next_sqr, diag)
 
         #procedure that checks whether the next square is a valid square (in the line of check)
         def set_in_check(next_sqr, diag):
@@ -554,8 +554,7 @@ class chess:
 
                         #the status of the chessboard square that originally contained the chess piece is set to the chess piece again, returning its state to the state it has before it was tested
                         chessboard[a][b].status = piece
-                        chess.update_check()
-                            
+                        chess.update_check()          
                 b += 1
                 if b == 8:
                     b = 0
@@ -636,6 +635,7 @@ class chess:
             #calls find_moves() to check whether the moves can be made
             moves_and_special_moves = chess.find_moves(self, moves_1, special_moves)
             moves_unknown = moves_and_special_moves[0]
+
             #checks the 'in check' status (for the king's color) for the chessboard square of each possible move
             #appends the possible moves whose chessboard squares are not under attack by an enemy piece
             moves = []
@@ -645,8 +645,6 @@ class chess:
                 else:
                     in_check = chessboard[moves_unknown[i][0]][moves_unknown[i][1]].sqr_in_check_black
 
-
-                print(chessboard[6][4].sqr_in_check_white, chessboard[6][4].sqr_in_check_black)
                 if not in_check:
                     moves.append(moves_unknown[i])
 
@@ -953,16 +951,16 @@ def set_up():
             y = 0
             z = 1
         chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         j = 0
         for i in range (0,2):
             chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
             chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             j = 3
         j = 0
         for i in range (0, 8):
-            chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            #chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             j += 1
 
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
