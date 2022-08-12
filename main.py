@@ -1007,7 +1007,7 @@ def valid_move(available_moves, potential):
 
 #procedure which sets up the 'end of game' display for the correct type of game end
 def end_game(winner, win_or_draw):
-    pygame.time.delay(100)
+    pygame.time.delay(50)
 
     #sets the two fonts needed to 'font' and font2'
     font = pygame.font.SysFont("Papyrus", 40)
@@ -1100,7 +1100,7 @@ whiteking = chessboard[4][7].status
 #creating the highlight rect that will be moved to select a chess piece
 highlight = pygame.Rect((-100, -100), standard)
 
-#setting the variable exit to False to start the loop
+#setting the variable 'exit' to False to start the loop
 exit = False
 
 #mainloop
