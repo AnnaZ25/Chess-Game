@@ -511,7 +511,7 @@ class chess:
         if king_moves[0] == [] and king_moves[2] != []:
             #calls find_king_sqr to find the 'in check' status (for the color of the king) of the chessboard square the king is on
             king_sqr = find_king_sqr(king, king_pos)
-            
+
             found = False
             a = 0
             b = 0
@@ -540,10 +540,14 @@ class chess:
 
                             #finds the moves the king would have with this new positioning
                             new_king_moves = king.moves(king_pos[0], king_pos[1], [])[0]
-                            
+
                             #if the king can move to other chessboard square and the king was not originally in check, found is set to True and the loop is ended
                             if new_king_moves != [] and not king_sqr:
                                 found = True
+                            #if the king was not originally in check, but the movement of a chess piece of the same color removes it from its attack, then found is set to True and the loop is ended
+                            if king_sqr:
+                                if not find_king_sqr(king, king_pos):
+                                    found = True
 
                             #the status of the chessboard square that was tested is set to the old_piece again, returing its state to the state it had before it was tested
                             chessboard[available_moves[i][0]][available_moves[i][1]].status = old_piece
