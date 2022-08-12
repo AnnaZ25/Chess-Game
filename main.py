@@ -560,18 +560,19 @@ class chess:
                     b = 0
                     a += 1
 
-            #finds the 'in check' status of the chessboard square containing the king for the color of the king
-            if king.color == "white":
-                king_sqr = chessboard[king_pos[0]][king_pos[1]].sqr_in_check_white
-            else:
-                king_sqr = chessboard[king_pos[0]][king_pos[1]].sqr_in_check_black
 
+            """Add comments"""
             #if a chess piece that, if moved to a position, would allow the king to move to another chessboard square is not found and the king is in check, the king is in checkmate
             if not found and king_sqr:
-                print("checkmate")
+                #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
+                if king.color == "white":
+                    end_game("black", "CHECKMATE")
+                else:
+                    end_game("white", "CHECKMATE")
             #if a chess piece that, if moved to a position, would allow the king to move to another chessboard square is not found and the king is not check, the king is in stalemate
             if not found and not king_sqr:
-                print("stalemate")
+                #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
+                end_game("none", "STALEMATE")
 
     #class for the kings
     class king:
@@ -1003,6 +1004,76 @@ def valid_move(available_moves, potential):
         if available_moves[i][0] == potential[0] and available_moves[i][1] == potential[1]:
             valid = True
     return valid 
+
+#procedure which sets up the 'end of game' display for the correct type of game end
+def end_game(winner, win_or_draw):
+    pygame.time.delay(100)
+
+    #sets the two fonts needed to 'font' and font2'
+    font = pygame.font.SysFont("Papyrus", 40)
+    font2 = pygame.font.SysFont("Papyrus", 33)
+
+    #creates two rects - one for the box containing the information we will display, and one for the outline of the box
+    outline = pygame.Rect(120, 187, 410, 280)
+    box = pygame.Rect(125, 192, 400, 270)
+
+    #checks whether the game has been won
+    if winner == "black" or winner == "white":
+        #draws the box in the color of the winning side
+        pygame.draw.rect(canvas, winner, box)
+
+        #modifies the colors of the text and its background to be displayedbased on the winner color
+        if winner == "black":
+            #creates the title and the subtitles
+            text_title = font.render("BLACK WINS", True, "white", "black")
+            text_by = font2.render("by", True, "white", "black")
+            text_type_end = font2.render(win_or_draw, True, "white", "black")
+            #draws the outline of the box in the color opposite to that of the winner
+            pygame.draw.rect(canvas, "white", outline, 6)
+        else:
+            #creates the title and the subtitles
+            text_title = font.render("WHITE WINS", True, "black", "white")
+            text_by = font2.render("by", True, "black", "white")
+            text_type_end = font2.render(win_or_draw, True, "black", "white")
+            #draws the outline of the box in the color opposite to that of the winner
+            pygame.draw.rect(canvas, "black", outline, 6)
+
+        #finds the rect of the title and positions it
+        rect_text_title = text_title.get_rect().move(164, 218)  
+
+        #finds the rect of the subtitle (containing what type of win it is) and positions it
+        rect_text_end = text_type_end.get_rect().move(178, 375)
+    
+    else:
+        #draws the box in the color gray (as no side has won)
+        pygame.draw.rect(canvas, "gray", box)
+
+        
+        #creates the title and the subtitles, all with gray backgrounds
+        text_title = font.render("DRAW", True, "black", "gray")
+        text_by = font2.render("by", True, "black", "gray")
+        text_type_end = font2.render(win_or_draw, True, "black", "gray")
+        #draws the outline of the box in beige
+        pygame.draw.rect(canvas, "beige", outline, 6)
+        
+        #finds the rect of the title and positions it
+        rect_text_title = text_title.get_rect().move(250, 218)
+
+        #finds the rect of the subtitle (containing what type of draw it is)
+        #positions the rect according to the type of draw (as the length of the names of different draws may vary)
+        if win_or_draw == "STALEMATE": 
+            rect_text_end = text_type_end.get_rect().move(178, 375)
+    
+    #finds the rect of the subtitle containing the word 'by' and positions it
+    rect_text_by = text_by.get_rect().move(310, 298)
+
+    #loads the texts onto the screen, positioning them at their rects
+    canvas.blit(text_title, rect_text_title)    
+    canvas.blit(text_by, rect_text_by)
+    canvas.blit(text_type_end, rect_text_end)
+    
+    #updates the display
+    pygame.display.update()
 
 #main
 canvas = create_screen()
