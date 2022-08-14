@@ -1352,6 +1352,8 @@ while not exit:
                     #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
                     event_down = mouse_up_down("up")
 
+
+                    """add comments"""
                     #checks whether the 'MOUSEBUTTONUP' event collides with the 'next game' button's rect
                     if next_game_button.collidepoint(event_down.pos):
                         #changes the cursor to an arrow
@@ -1360,15 +1362,15 @@ while not exit:
                         for i in range(0, 8):
                             for j in range(0, 8):
                                 if chessboard[i][j].status != "empty":
-                                    chess_pieces.remove(chessboard[i][j].status)
-                                    del chessboard[i][j].status
+                                    piece = chessboard[i][j].status
+                                    chess_pieces.remove(piece)
+                                    del piece
                                     chessboard[i][j].status = "empty"
-                                
                         finished_game = False
                         set_up()
 
                         #sets each king object to a variable
-                        blackking = chessboard[4][0].status  
+                        blackking = chessboard[4][0].status 
                         whiteking = chessboard[4][7].status  
                     
                 elif menu_button.collidepoint(event.pos):
@@ -1383,7 +1385,6 @@ while not exit:
                         #changes the cursor to an arrow
                         pygame.mouse.set_cursor(pygame.cursors.arrow)
                         """clicked menu"""
-
 
         #checking for the QUIT event and closing the window if needed 
         if event.type == pygame.QUIT:
