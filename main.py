@@ -560,8 +560,6 @@ class chess:
                     b = 0
                     a += 1
 
-
-            """Add comments"""
             #if a chess piece that, if moved to a position, would allow the king to move to another chessboard square is not found and the king is in check, the king is in checkmate
             if not found and king_sqr:
                 #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
@@ -1017,6 +1015,26 @@ def end_game(winner, win_or_draw):
     outline = pygame.Rect(120, 187, 410, 280)
     box = pygame.Rect(125, 192, 400, 270)
 
+    #creating and drawing the box, outline and handles to the box; for the box containing the 'next page' and 'menu' buttons
+    box2 = pygame.Rect((250, 480), (150, 58))
+    outline2 = pygame.Rect((245, 475), (160, 68))
+    handles = pygame.Rect((270, 440), (110, 75))
+    pygame.draw.rect(canvas, "#fcd292", box2)
+    pygame.draw.rect(canvas, "#291715", outline2, 5)
+    pygame.draw.rect(canvas, "#291715", handles, 20)
+
+    #loading the 'next game' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
+    next_game = pygame.image.load("nextgame.png")
+    next_game = pygame.transform.scale(next_game, (45,45))
+    next_game_rect = next_game.get_rect().move(270, 485)
+    canvas.blit(next_game, next_game_rect)
+
+    #loading the 'menu' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
+    menu = pygame.image.load("menu.png")
+    menu = pygame.transform.scale(menu, (45,45))
+    menu_rect = menu.get_rect().move(337, 485)
+    canvas.blit(menu, menu_rect)
+
     #checks whether the game has been won
     if winner == "black" or winner == "white":
         #draws the box in the color of the winning side
@@ -1042,12 +1060,14 @@ def end_game(winner, win_or_draw):
         rect_text_title = text_title.get_rect().move(164, 218)  
 
         #finds the rect of the subtitle (containing what type of win it is) and positions it
-        rect_text_end = text_type_end.get_rect().move(178, 375)
+        if win_or_draw == "CHECKMATE":
+            rect_text_end = text_type_end.get_rect().move(178, 375)
+        elif win_or_draw == "RESIGNATION":
+           rect_text_end = text_type_end.get_rect().move(172, 375) 
     
     else:
         #draws the box in the color gray (as no side has won)
         pygame.draw.rect(canvas, "gray", box)
-
         
         #creates the title and the subtitles, all with gray backgrounds
         text_title = font.render("DRAW", True, "black", "gray")
@@ -1072,6 +1092,10 @@ def end_game(winner, win_or_draw):
     canvas.blit(text_by, rect_text_by)
     canvas.blit(text_type_end, rect_text_end)
     
+    #sets the global variable 'finished_game' to True, to signify that the current game has been finished
+    global finished_game
+    finished_game = True
+
     #updates the display
     pygame.display.update()
 
@@ -1093,6 +1117,12 @@ for i in range (0, 8):
 chess_pieces = []
 set_up()
 
+#loading the 'resign' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
+resign = pygame.image.load("stop.png")
+resign = pygame.transform.scale(resign, (45,45))
+resign_rect = resign.get_rect().move(598, 5)
+canvas.blit(resign, resign_rect)
+
 #sets each king object to a variable
 blackking = chessboard[4][0].status  
 whiteking = chessboard[4][7].status  
@@ -1103,176 +1133,208 @@ highlight = pygame.Rect((-100, -100), standard)
 #setting the variable 'exit' to False to start the loop
 exit = False
 
+#setting the variable 'finished_game' to False
+#this variable will signify whether a game has been finished
+finished_game = False
+
 #mainloop
 while not exit:
     for event in pygame.event.get(): 
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            found = False
-            i = -1
-            #looping through the list of chess pieces to identify whether a chess piece has been selected. 
-            #the loop will pick the first chess piece selected in the list(in case the mouse click landed on two squares adjacent to each other)
-            while not found and i != len(chess_pieces)-1:
-                i += 1
-                piece = chess_pieces[i]
-                #sets 'special_moves' to []
-                #this list will contain the special moves that could be performed on the chess piece from its current position
-                special_moves = []
-                
-                #checks whether the piece has been selected
-                if piece.rect.collidepoint(event.pos):
-                    #selection of the chess piece
-                    found = True
-                    #changes the cursor to a diamond
-                    pygame.mouse.set_cursor(pygame.cursors.diamond)
+        #checks whether 'finished_game' is False
+        if not finished_game:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                found = False
+                i = -1
+                #looping through the list of chess pieces to identify whether a chess piece has been selected. 
+                #the loop will pick the first chess piece selected in the list(in case the mouse click landed on two squares adjacent to each other)
+                while not found and i != len(chess_pieces)-1:
+                    i += 1
+                    piece = chess_pieces[i]
+                    #sets 'special_moves' to []
+                    #this list will contain the special moves that could be performed on the chess piece from its current position
+                    special_moves = []
+                    
+                    #checks whether the piece has been selected
+                    if piece.rect.collidepoint(event.pos):
+                        #selection of the chess piece
+                        found = True
+                        #changes the cursor to a diamond
+                        pygame.mouse.set_cursor(pygame.cursors.diamond)
 
-                    #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
-                    event_up = mouse_up_down("up")
-                    pygame.mouse.set_cursor(pygame.cursors.arrow)
-                    #moves and draws the highlight (to show that the piece has been selected)
-                    highlight2 = highlight.move(piece.rect[0]+100, piece.rect[1]+100)
-                    pygame.draw.rect(canvas, "gray", highlight2, 5)
-                    #calls the function find_piece which finds the coordinates that the chessboard square that chess piece is on 
-                    #then assigns the corresponding chessboard square to the variable 'chess_square_before'
-                    chess_square_coords = find_piece(piece)
-                    chess_square_before = chessboard[chess_square_coords[0]][chess_square_coords[1]]
-                    #updates the display
-                    pygame.display.update()
+                        #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                        event_up = mouse_up_down("up")
+                        pygame.mouse.set_cursor(pygame.cursors.arrow)
+                        #moves and draws the highlight (to show that the piece has been selected)
+                        highlight2 = highlight.move(piece.rect[0]+100, piece.rect[1]+100)
+                        pygame.draw.rect(canvas, "gray", highlight2, 5)
+                        #calls the function find_piece which finds the coordinates that the chessboard square that chess piece is on 
+                        #then assigns the corresponding chessboard square to the variable 'chess_square_before'
+                        chess_square_coords = find_piece(piece)
+                        chess_square_before = chessboard[chess_square_coords[0]][chess_square_coords[1]]
+                        #updates the display
+                        pygame.display.update()
 
-                    #selection and movement of the chess piece to the destination square
+                        #selection and movement of the chess piece to the destination square
 
-                    #checking whether the square pressed on is available for the chess piece to move to
-                    #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
-                    event_down = mouse_up_down("down")
-                    #moves the centre rect to the position the mousebutton has clicked down on
-                    piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_down.pos[0], -piece.rect_centre[1]+event_down.pos[1])
-                    #calls the function find_square to find which chessboard square this rect collides with
-                    potential_x_y= find_square_coords(piece.rect_centre[0], piece.rect_centre[1])
-                    #if it is within a square's region, and the square is within the possible moves of the piece, the cursor is changed to a diamond
-                    if potential_x_y != None:
-                        #the moves function is called (specific to the piece type) and the available moves that the piece can take are found as well as any special moves
-                        available_moves_and_special_moves = piece.moves(chess_square_coords[0], chess_square_coords[1], special_moves)
-                        special_moves = available_moves_and_special_moves[1]
+                        #checking whether the square pressed on is available for the chess piece to move to
+                        #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                        event_down = mouse_up_down("down")
+                        #moves the centre rect to the position the mousebutton has clicked down on
+                        piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_down.pos[0], -piece.rect_centre[1]+event_down.pos[1])
+                        #calls the function find_square to find which chessboard square this rect collides with
+                        potential_x_y= find_square_coords(piece.rect_centre[0], piece.rect_centre[1])
+                        #if it is within a square's region, and the square is within the possible moves of the piece, the cursor is changed to a diamond
+                        if potential_x_y != None:
+                            #the moves function is called (specific to the piece type) and the available moves that the piece can take are found as well as any special moves
+                            available_moves_and_special_moves = piece.moves(chess_square_coords[0], chess_square_coords[1], special_moves)
+                            special_moves = available_moves_and_special_moves[1]
 
-                        #finds and removes the castling move coordinates, so that they are not checked along with the other movements (for whether the king will be in check if it moves to the new position)
-                        #the castling move coordinates are different from the other move coordinates (and have already been checked in a different way), and so cannot be checked along with the other movements
-                        castling_moves = []
-                        for i in range(0, len(special_moves)):
-                            if special_moves[i][0] == "castling":
-                                castling_moves.append(special_moves[i][1])
+                            #finds and removes the castling move coordinates, so that they are not checked along with the other movements (for whether the king will be in check if it moves to the new position)
+                            #the castling move coordinates are different from the other move coordinates (and have already been checked in a different way), and so cannot be checked along with the other movements
+                            castling_moves = []
+                            for i in range(0, len(special_moves)):
+                                if special_moves[i][0] == "castling":
+                                    castling_moves.append(special_moves[i][1])
 
-                        for i in range (0, len(castling_moves)):
-                            available_moves_and_special_moves[0].remove(castling_moves[i])
-                        
-                        #calls the function check_check() which checks each movement of the piece and returns only the movements that would not result in the king (of the same color as the piece) being in check 
-                        available_moves = chess.check_check(piece, chess_square_before, available_moves_and_special_moves[0])
-
-                        #the castling move coordinates are added back to the list of moves, which have now been checked
-                        for i in range (0, len(castling_moves)):
-                            available_moves.append(castling_moves[i])
-
-                        #calls function to check potential move validity
-                        valid = valid_move(available_moves, potential_x_y)
-                        #changes the cursor to a diamond if the potential move is valid
-                        if valid:
-                            pygame.mouse.set_cursor(pygame.cursors.diamond)
-
-                    #moves the chess piece to the destination square (if the piece can be moved to it)
-                    #this new square can be different than the square that the mouse was held down on in the previous section (in case the user changes their mind and clicks on a different square)
-                    #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
-                    event_up2 = mouse_up_down("up")
-                    pygame.mouse.set_cursor(pygame.cursors.arrow)
-                    #moves the centre rect to the new position. This will help figure out which square the chess piece should be put into
-                    piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_up2.pos[0], -piece.rect_centre[1]+event_up2.pos[1])
-                    #calls the function find_square which finds the chessboard square that the chess piece will be moved to 
-                    potential_x_y_click = find_square_coords(piece.rect_centre[0], piece.rect_centre[1])
-                    if potential_x_y_click != None:
-                        #calls function to check move validity
-                        valid = valid_move(available_moves, potential_x_y_click)
-                        if valid:
-                            chess_square = chessboard[potential_x_y_click[0]][potential_x_y_click[1]]
-                            #checks whether the square is already occupied, and if so, erases the place where the piece was and moves its rect out of the screen
-                            #this prevents the piece from appearing on the chessboard again
-                            if chess_square.status != "empty":
-                                chess_square.status.rect = chess_square.status.rect.move(-1000, -1000)
-                                canvas.blit(background, chess_square.rect, chess_square.rect)
-                                pygame.display.update()
-
-                            #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
-                            canvas.blit(background, piece.rect, piece.rect) 
-                            #moves the image of the chess piece to the new position, along with its rect and centre rect
-                            canvas.blit(piece.img, chess_square.rect)
-                            piece.rect = piece.rect.move(-piece.rect[0]+chess_square.rect[0], -piece.rect[1]+chess_square.rect[1])
-                            piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+piece.rect[0]+35, -piece.rect_centre[1]+piece.rect[1]+35)
+                            for i in range (0, len(castling_moves)):
+                                available_moves_and_special_moves[0].remove(castling_moves[i])
                             
-                            #updates the display
-                            pygame.display.update()   
+                            #calls the function check_check() which checks each movement of the piece and returns only the movements that would not result in the king (of the same color as the piece) being in check 
+                            available_moves = chess.check_check(piece, chess_square_before, available_moves_and_special_moves[0])
 
-                            #assigns the new chessboard square status to the chess piece
-                            old_piece = chess_square.status
-                            chess_square.status = piece
+                            #the castling move coordinates are added back to the list of moves, which have now been checked
+                            for i in range (0, len(castling_moves)):
+                                available_moves.append(castling_moves[i])
 
-                            #sets the old chessboard square status to 'empty'
-                            chess_square_before.status = "empty" 
+                            #calls function to check potential move validity
+                            valid = valid_move(available_moves, potential_x_y)
+                            #changes the cursor to a diamond if the potential move is valid
+                            if valid:
+                                pygame.mouse.set_cursor(pygame.cursors.diamond)
 
-                            #checks whether the new move is a special move
-                            if special_moves != []:
-                                found = False
-                                a = -1
+                        #moves the chess piece to the destination square (if the piece can be moved to it)
+                        #this new square can be different than the square that the mouse was held down on in the previous section (in case the user changes their mind and clicks on a different square)
+                        #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                        event_up2 = mouse_up_down("up")
+                        pygame.mouse.set_cursor(pygame.cursors.arrow)
+                        #moves the centre rect to the new position. This will help figure out which square the chess piece should be put into
+                        piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+event_up2.pos[0], -piece.rect_centre[1]+event_up2.pos[1])
+                        #calls the function find_square which finds the chessboard square that the chess piece will be moved to 
+                        potential_x_y_click = find_square_coords(piece.rect_centre[0], piece.rect_centre[1])
+                        if potential_x_y_click != None:
+                            #calls function to check move validity
+                            valid = valid_move(available_moves, potential_x_y_click)
+                            if valid:
+                                chess_square = chessboard[potential_x_y_click[0]][potential_x_y_click[1]]
+                                #checks whether the square is already occupied, and if so, erases the place where the piece was and moves its rect out of the screen
+                                #this prevents the piece from appearing on the chessboard again
+                                if chess_square.status != "empty":
+                                    chess_square.status.rect = chess_square.status.rect.move(-1000, -1000)
+                                    canvas.blit(background, chess_square.rect, chess_square.rect)
+                                    pygame.display.update()
 
-                                while not found and a <= len(special_moves)-2:
-                                    a += 1
-                                    if special_moves[a][1][0] == potential_x_y_click[0] and special_moves[a][1][1] == potential_x_y_click[1]:
-                                        found = True
+                                #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
+                                canvas.blit(background, piece.rect, piece.rect) 
+                                #moves the image of the chess piece to the new position, along with its rect and centre rect
+                                canvas.blit(piece.img, chess_square.rect)
+                                piece.rect = piece.rect.move(-piece.rect[0]+chess_square.rect[0], -piece.rect[1]+chess_square.rect[1])
+                                piece.rect_centre = piece.rect_centre.move(-piece.rect_centre[0]+piece.rect[0]+35, -piece.rect_centre[1]+piece.rect[1]+35)
                                 
-                                if found:
-                                    #checks whether the special move is a pawn promotion
-                                    #if so, calls the subroutine promote() to promote the pawn 
-                                    if special_moves[a][0] == "pawn promote":
-                                        piece.promote(chess_square)
+                                #updates the display
+                                pygame.display.update()   
 
-                                    #checks whether the special move is a castling move
-                                    #if so, calls the subroutine castling() to perform the castling   
-                                    if special_moves[a][0] == "castling":
-                                        chess.castling(piece, special_moves[a], potential_x_y_click, old_piece)
+                                #assigns the new chessboard square status to the chess piece
+                                old_piece = chess_square.status
+                                chess_square.status = piece
 
-                                    #checks whether the special move is an en passant move
-                                    #if so, calls the subroutine perform_enpassant() to perform the en passant move
-                                    if special_moves[a][0] == "en passant":
-                                        piece.perform_enpassant(special_moves[a][1])
+                                #sets the old chessboard square status to 'empty'
+                                chess_square_before.status = "empty" 
 
-                                #resets any expired en passant possiblilities by setting the en passant status of the pawn to "no capture"
-                                #an en passant move can only be carried out immediately after the pawn moves forward by 2 spaces; hence the expired en passant possibilites need to be removed
-                                for c in range (0, 8):
-                                    for d in range (0, 8):
-                                        if isinstance(chessboard[c][d].status, chess.pawn):
-                                            if chessboard[c][d].status.enpassant == "can be captured":
-                                                chessboard[c][d].status.enpassant = "no capture"
+                                #checks whether the new move is a special move
+                                if special_moves != []:
+                                    found = False
+                                    a = -1
 
-                                #checks whether the special move found was a "can be captured en passant" flag
-                                #if so, sets the en passant status of the pawn to "can be captured"
-                                if found:
-                                    if special_moves[a][0] == "can be captured en passant":
-                                        piece.enpassant = "can be captured"
+                                    while not found and a <= len(special_moves)-2:
+                                        a += 1
+                                        if special_moves[a][1][0] == potential_x_y_click[0] and special_moves[a][1][1] == potential_x_y_click[1]:
+                                            found = True
+                                    
+                                    if found:
+                                        #checks whether the special move is a pawn promotion
+                                        #if so, calls the subroutine promote() to promote the pawn 
+                                        if special_moves[a][0] == "pawn promote":
+                                            piece.promote(chess_square)
 
-                            #sets the moved status of the chess piece to True
-                            piece.moved = True
+                                        #checks whether the special move is a castling move
+                                        #if so, calls the subroutine castling() to perform the castling   
+                                        if special_moves[a][0] == "castling":
+                                            chess.castling(piece, special_moves[a], potential_x_y_click, old_piece)
 
-                            #calls update_check() to update the 'in check' status of each chessboard square for both kings
-                            chess.update_check()
+                                        #checks whether the special move is an en passant move
+                                        #if so, calls the subroutine perform_enpassant() to perform the en passant move
+                                        if special_moves[a][0] == "en passant":
+                                            piece.perform_enpassant(special_moves[a][1])
 
-                            #calls check_checkmate_stalemate() for each king to to check whether there is a checkmate or stalemate
-                            chess.check_checkmate_stalemate(whiteking)
-                            chess.check_checkmate_stalemate(blackking)
+                                    #resets any expired en passant possiblilities by setting the en passant status of the pawn to "no capture"
+                                    #an en passant move can only be carried out immediately after the pawn moves forward by 2 spaces; hence the expired en passant possibilites need to be removed
+                                    for c in range (0, 8):
+                                        for d in range (0, 8):
+                                            if isinstance(chessboard[c][d].status, chess.pawn):
+                                                if chessboard[c][d].status.enpassant == "can be captured":
+                                                    chessboard[c][d].status.enpassant = "no capture"
 
+                                    #checks whether the special move found was a "can be captured en passant" flag
+                                    #if so, sets the en passant status of the pawn to "can be captured"
+                                    if found:
+                                        if special_moves[a][0] == "can be captured en passant":
+                                            piece.enpassant = "can be captured"
+
+                                #sets the moved status of the chess piece to True
+                                piece.moved = True
+
+                                #calls update_check() to update the 'in check' status of each chessboard square for both kings
+                                chess.update_check()
+
+                                #calls check_checkmate_stalemate() for each king to to check whether there is a checkmate or stalemate
+                                chess.check_checkmate_stalemate(whiteking)
+                                chess.check_checkmate_stalemate(blackking)
+
+                            else:
+                                #removes the selection
+                                reset_click(piece.rect, piece, event)
                         else:
                             #removes the selection
                             reset_click(piece.rect, piece, event)
-                    else:
-                        #removes the selection
-                        reset_click(piece.rect, piece, event)
 
-                    #updates the display
-                    pygame.display.update()                
+                        #updates the display
+                        pygame.display.update()    
+                
+                #checks whether a chesspiece selection has not been detected
+                if not found:
+                    #checks whether there is a 'MOUSEBUTTONDOWN' event collides with the 'resign' button's rect
+                    if resign_rect.collidepoint(event.pos):
+                        #changes the cursor to a diamond
+                        pygame.mouse.set_cursor(pygame.cursors.diamond)
+
+                        #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                        event_down = mouse_up_down("up")
+
+                        #checks whether the 'MOUSEBUTTONUP' event collides with the 'resign' button's rect
+                        if resign_rect.collidepoint(event_down.pos):
+                            #changes the cursor to an arrow
+                            pygame.mouse.set_cursor(pygame.cursors.arrow)
+
+                            #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
+                            """modify passing in the winner"""
+                            end_game("white", "RESIGNATION")
+                        
+                        #changes the cursor to an arrow
+                        pygame.mouse.set_cursor(pygame.cursors.arrow)
+
+                        #updates the display
+                        pygame.display.update()
+                    
         #checking for the QUIT event and closing the window if needed 
         if event.type == pygame.QUIT:
             exit = True
