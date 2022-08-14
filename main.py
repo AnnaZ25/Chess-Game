@@ -1016,12 +1016,13 @@ def end_game(winner, win_or_draw):
     box = pygame.Rect(125, 192, 400, 270)
 
     #creating and drawing the box, outline and handles to the box; for the box containing the 'next page' and 'menu' buttons
+    handles = pygame.Rect((270, 440), (110, 75))
     box2 = pygame.Rect((250, 480), (150, 58))
     outline2 = pygame.Rect((245, 475), (160, 68))
-    handles = pygame.Rect((270, 440), (110, 75))
+    pygame.draw.rect(canvas, "#291715", handles, 20)
     pygame.draw.rect(canvas, "#fcd292", box2)
     pygame.draw.rect(canvas, "#291715", outline2, 5)
-    pygame.draw.rect(canvas, "#291715", handles, 20)
+    
 
     #loading the 'next game' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
     next_game = pygame.image.load("nextgame.png")
@@ -1034,6 +1035,14 @@ def end_game(winner, win_or_draw):
     menu = pygame.transform.scale(menu, (45,45))
     menu_rect = menu.get_rect().move(337, 485)
     canvas.blit(menu, menu_rect)
+    
+    """add comments"""
+    global next_game_button
+    next_game_button = next_game_rect 
+
+    """add comments"""
+    global menu_button
+    menu_button = menu_rect 
 
     #checks whether the game has been won
     if winner == "black" or winner == "white":
@@ -1326,7 +1335,7 @@ while not exit:
                             pygame.mouse.set_cursor(pygame.cursors.arrow)
 
                             #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
-                            """modify passing in the winner"""
+                            """add comments modify passing in the winner"""
                             end_game("white", "RESIGNATION")
                         
                         #changes the cursor to an arrow
@@ -1334,7 +1343,48 @@ while not exit:
 
                         #updates the display
                         pygame.display.update()
+        else:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if next_game_button.collidepoint(event.pos):
+                    #changes the cursor to a diamond
+                    pygame.mouse.set_cursor(pygame.cursors.diamond)
+
+                    #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                    event_down = mouse_up_down("up")
+
+                    #checks whether the 'MOUSEBUTTONUP' event collides with the 'next game' button's rect
+                    if next_game_button.collidepoint(event_down.pos):
+                        #changes the cursor to an arrow
+                        pygame.mouse.set_cursor(pygame.cursors.arrow)
+                        canvas.blit(background, (0, 0)) 
+                        for i in range(0, 8):
+                            for j in range(0, 8):
+                                if chessboard[i][j].status != "empty":
+                                    chess_pieces.remove(chessboard[i][j].status)
+                                    del chessboard[i][j].status
+                                    chessboard[i][j].status = "empty"
+                                
+                        finished_game = False
+                        set_up()
+
+                        #sets each king object to a variable
+                        blackking = chessboard[4][0].status  
+                        whiteking = chessboard[4][7].status  
                     
+                elif menu_button.collidepoint(event.pos):
+                    #changes the cursor to a diamond
+                    pygame.mouse.set_cursor(pygame.cursors.diamond)
+
+                    #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                    event_down = mouse_up_down("up")
+
+                    #checks whether the 'MOUSEBUTTONUP' event collides with the 'menu' button's rect
+                    if menu_button.collidepoint(event_down.pos):
+                        #changes the cursor to an arrow
+                        pygame.mouse.set_cursor(pygame.cursors.arrow)
+                        """clicked menu"""
+
+
         #checking for the QUIT event and closing the window if needed 
         if event.type == pygame.QUIT:
             exit = True
