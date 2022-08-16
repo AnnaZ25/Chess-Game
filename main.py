@@ -1036,11 +1036,11 @@ def end_game(winner, win_or_draw):
     menu_rect = menu.get_rect().move(337, 485)
     canvas.blit(menu, menu_rect)
     
-    """add comments"""
+    #setting the global variable 'next_game_button' to 'next_game_rect' 
     global next_game_button
     next_game_button = next_game_rect 
 
-    """add comments"""
+    #setting the global variable 'menu_button' to the 'menu_rect' 
     global menu_button
     menu_button = menu_rect 
 
@@ -1146,6 +1146,10 @@ exit = False
 #this variable will signify whether a game has been finished
 finished_game = False
 
+#creates list of the two colors and sets the 'color' index to 0
+colors = ["white", "black"]
+color = 0
+
 #mainloop
 while not exit:
     for event in pygame.event.get(): 
@@ -1163,8 +1167,8 @@ while not exit:
                     #this list will contain the special moves that could be performed on the chess piece from its current position
                     special_moves = []
                     
-                    #checks whether the piece has been selected
-                    if piece.rect.collidepoint(event.pos):
+                    #checks whether the piece has been selected and whether the piece is of the color whose turn it is to move
+                    if piece.rect.collidepoint(event.pos) and piece.color == colors[color]:
                         #selection of the chess piece
                         found = True
                         #changes the cursor to a diamond
@@ -1309,6 +1313,11 @@ while not exit:
                                 chess.check_checkmate_stalemate(whiteking)
                                 chess.check_checkmate_stalemate(blackking)
 
+                                #updates the color index, so that the opposite color is the only one that can be moved on the next turn
+                                color += 1
+                                if color > 1:
+                                    color = 0
+
                             else:
                                 #removes the selection
                                 reset_click(piece.rect, piece, event)
@@ -1334,9 +1343,14 @@ while not exit:
                             #changes the cursor to an arrow
                             pygame.mouse.set_cursor(pygame.cursors.arrow)
 
+                            #finds the winner of the game - the color opposite to the color that resigned
+                            if colors[color] == "white":
+                                winner = "black"
+                            else:
+                                winner = "white"
+
                             #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
-                            """add comments modify passing in the winner"""
-                            end_game("white", "RESIGNATION")
+                            end_game(winner, "RESIGNATION")
                         
                         #changes the cursor to an arrow
                         pygame.mouse.set_cursor(pygame.cursors.arrow)
@@ -1352,13 +1366,13 @@ while not exit:
                     #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
                     event_down = mouse_up_down("up")
 
-
-                    """add comments"""
                     #checks whether the 'MOUSEBUTTONUP' event collides with the 'next game' button's rect
                     if next_game_button.collidepoint(event_down.pos):
                         #changes the cursor to an arrow
                         pygame.mouse.set_cursor(pygame.cursors.arrow)
                         canvas.blit(background, (0, 0)) 
+                        #deletes all the chess pieces and removes them from the list of chess pieces
+                        #updates the chessboard the chess piece was standing on to empty
                         for i in range(0, 8):
                             for j in range(0, 8):
                                 if chessboard[i][j].status != "empty":
@@ -1366,8 +1380,15 @@ while not exit:
                                     chess_pieces.remove(piece)
                                     del piece
                                     chessboard[i][j].status = "empty"
+
+                        #setting the variable 'finished_game' to False
                         finished_game = False
+                        
+                        #calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
                         set_up()
+                        
+                        #loads the 'resign' button onto the screen
+                        canvas.blit(resign, resign_rect)
 
                         #sets each king object to a variable
                         blackking = chessboard[4][0].status 
