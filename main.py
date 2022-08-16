@@ -1433,5 +1433,28 @@ while not exit:
 
         #checking for the QUIT event and closing the window if needed 
         if event.type == pygame.QUIT:
+            #resets the chessboard
+            canvas.blit(background, (0,0))
+
+            #sets the font needed to 'font'
+            font = pygame.font.SysFont("Papyrus", 33)
+
+            #creates the text
+            text_title = font.render("THANKS FOR PLAYING!", True, "black", "gray")
+
+            #finds the rect of the title and positions it
+            rect_text_title = text_title.get_rect().move(90, 300)
+            
+            #loads the text and the border around it onto the board
+            canvas.blit(text_title, rect_text_title)
+            pygame.draw.rect(canvas, "light gray", (rect_text_title[0]-10, rect_text_title[1]-10, rect_text_title[2]+20, rect_text_title[3]+20), 5)
+            
+            #updates the display
+            pygame.display.update()
+
+            #waits before setting 'exit' to True to end the loop and close the window
+            pygame.time.delay(800)
             exit = True
+    
+    #updates the display
     pygame.display.update()
