@@ -1090,7 +1090,7 @@ def end_game(winner, win_or_draw):
 
         #finds the rect of the subtitle (containing what type of draw it is)
         #positions the rect according to the type of draw (as the length of the names of different draws may vary)
-        if win_or_draw == "STALEMATE": 
+        if win_or_draw == "STALEMATE" or win_or_draw == "AGREEMENT": 
             rect_text_end = text_type_end.get_rect().move(178, 375)
     
     #finds the rect of the subtitle containing the word 'by' and positions it
@@ -1131,6 +1131,13 @@ resign = pygame.image.load("stop.png")
 resign = pygame.transform.scale(resign, (45,45))
 resign_rect = resign.get_rect().move(598, 5)
 canvas.blit(resign, resign_rect)
+
+
+#loading the 'resign' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
+drawbyagree = pygame.image.load("stop2.png")
+drawbyagree = pygame.transform.scale(drawbyagree, (45,45))
+drawbyagree_rect = drawbyagree.get_rect().move(5, 5)
+canvas.blit(drawbyagree, drawbyagree_rect)
 
 #sets each king object to a variable
 blackking = chessboard[4][0].status  
@@ -1351,12 +1358,28 @@ while not exit:
 
                             #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
                             end_game(winner, "RESIGNATION")
-                        
-                        #changes the cursor to an arrow
-                        pygame.mouse.set_cursor(pygame.cursors.arrow)
+                    
+                    #checks whether there is a 'MOUSEBUTTONDOWN' event collides with the 'draw by agreement' button's rect
+                    elif drawbyagree_rect.collidepoint(event.pos):
+                        #changes the cursor to a diamond
+                        pygame.mouse.set_cursor(pygame.cursors.diamond)
 
-                        #updates the display
-                        pygame.display.update()
+                        #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                        event_down = mouse_up_down("up")
+
+                        #checks whether the 'MOUSEBUTTONUP' event collides with the 'draw by agreement' button's rect
+                        if drawbyagree_rect.collidepoint(event_down.pos):
+                            #changes the cursor to an arrow
+                            pygame.mouse.set_cursor(pygame.cursors.arrow)
+
+                            #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
+                            end_game("none", "AGREEMENT")
+                        
+                    #changes the cursor to an arrow
+                    pygame.mouse.set_cursor(pygame.cursors.arrow)
+
+                    #updates the display
+                    pygame.display.update()
         else:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if next_game_button.collidepoint(event.pos):
@@ -1383,12 +1406,13 @@ while not exit:
 
                         #setting the variable 'finished_game' to False
                         finished_game = False
-                        
+
                         #calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
                         set_up()
                         
-                        #loads the 'resign' button onto the screen
+                        #loads the 'resign' and 'draw by agreement' button onto the screen
                         canvas.blit(resign, resign_rect)
+                        canvas.blit(drawbyagree, drawbyagree_rect)
 
                         #sets each king object to a variable
                         blackking = chessboard[4][0].status 
