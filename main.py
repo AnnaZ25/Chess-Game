@@ -1092,6 +1092,21 @@ def end_game(winner, win_or_draw):
         #positions the rect according to the type of draw (as the length of the names of different draws may vary)
         if win_or_draw == "STALEMATE" or win_or_draw == "AGREEMENT": 
             rect_text_end = text_type_end.get_rect().move(178, 375)
+
+
+            """Add comments"""
+        elif win_or_draw == "FIFTY-MOVE RULE":
+            font2 = pygame.font.SysFont("Papyrus", 32)
+            text_type_end = font2.render(win_or_draw, True, "black", "gray")
+            rect_text_end = text_type_end.get_rect().move(139, 375)
+        elif win_or_draw == "SEVENTY-FIVE-MOVE":
+            font2 = pygame.font.SysFont("Papyrus", 27)
+            text_type_end = font2.render(win_or_draw, True, "black", "gray")
+            rect_text_end = text_type_end.get_rect().move(138, 370)
+            font2 = pygame.font.SysFont("Papyrus", 20)
+            text_type_end_2 = font2.render("RULE", True, "black", "gray")
+            rect_text_end_2 = text_type_end_2.get_rect().move(298, 410)
+            canvas.blit(text_type_end_2, rect_text_end_2)
     
     #finds the rect of the subtitle containing the word 'by' and positions it
     rect_text_by = text_by.get_rect().move(310, 298)
@@ -1132,7 +1147,6 @@ resign = pygame.transform.scale(resign, (45,45))
 resign_rect = resign.get_rect().move(598, 5)
 canvas.blit(resign, resign_rect)
 
-
 #loading the 'resign' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
 drawbyagree = pygame.image.load("stop2.png")
 drawbyagree = pygame.transform.scale(drawbyagree, (45,45))
@@ -1157,12 +1171,37 @@ finished_game = False
 colors = ["white", "black"]
 color = 0
 
+"""add comments"""
+moves_record = []
+drawbyfifty = pygame.image.load("stop.png")
+drawbyfifty = pygame.transform.scale(drawbyfifty, (45,45))
+drawbyfifty_rect = drawbyfifty.get_rect()
+drawbyfifty_rect = drawbyfifty.get_rect().move(50, 0)
+
+"""add comments"""
+def check_moves_record(moves_record):
+    global button_50_made
+    if len(moves_record) == 50*2 and not button_50_made:
+        button_50_made = True
+        global drawbyfifty_rect
+        drawbyfifty_rect = drawbyfifty_rect.move(-45, 300)
+        canvas.blit(drawbyfifty, drawbyfifty_rect)
+        pygame.display.update()
+    elif len(moves_record) == 75*2:
+        global finished_game
+        finished_game = True
+        end_game("none",  "SEVENTY-FIVE-MOVE")
+
+"""add comments"""
+button_50_made = False
+
 #mainloop
 while not exit:
     for event in pygame.event.get(): 
         #checks whether 'finished_game' is False
         if not finished_game:
             if event.type == pygame.MOUSEBUTTONDOWN:
+                
                 found = False
                 i = -1
                 #looping through the list of chess pieces to identify whether a chess piece has been selected. 
@@ -1245,6 +1284,10 @@ while not exit:
                             #calls function to check move validity
                             valid = valid_move(available_moves, potential_x_y_click)
                             if valid:
+                                """add comments"""
+                                capture = False
+                                castling = False
+
                                 chess_square = chessboard[potential_x_y_click[0]][potential_x_y_click[1]]
                                 #checks whether the square is already occupied, and if so, erases the place where the piece was and moves its rect out of the screen
                                 #this prevents the piece from appearing on the chessboard again
@@ -1252,6 +1295,9 @@ while not exit:
                                     chess_square.status.rect = chess_square.status.rect.move(-1000, -1000)
                                     canvas.blit(background, chess_square.rect, chess_square.rect)
                                     pygame.display.update()
+                                    capture = True
+                                """add comments"""
+
 
                                 #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
                                 canvas.blit(background, piece.rect, piece.rect) 
@@ -1290,6 +1336,8 @@ while not exit:
                                         #if so, calls the subroutine castling() to perform the castling   
                                         if special_moves[a][0] == "castling":
                                             chess.castling(piece, special_moves[a], potential_x_y_click, old_piece)
+                                            """add comments"""
+                                            castling = True
 
                                         #checks whether the special move is an en passant move
                                         #if so, calls the subroutine perform_enpassant() to perform the en passant move
@@ -1325,6 +1373,21 @@ while not exit:
                                 if color > 1:
                                     color = 0
 
+                                """add comments"""
+                                if capture and not castling:
+                                    moves_record = []
+                                    canvas.blit(background, drawbyfifty_rect, drawbyfifty_rect)
+                                    drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
+                                    button_50_made = False
+                                    
+                                elif isinstance(piece, chess.pawn):
+                                    moves_record = []
+                                    canvas.blit(background, drawbyfifty_rect, drawbyfifty_rect)
+                                    drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
+                                    button_50_made = False
+                                    
+                                else:
+                                    moves_record.append(piece)
                             else:
                                 #removes the selection
                                 reset_click(piece.rect, piece, event)
@@ -1374,12 +1437,34 @@ while not exit:
 
                             #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
                             end_game("none", "AGREEMENT")
-                        
+
+
+                        """add comments"""  
+                    #checks whether there is a 'MOUSEBUTTONDOWN' event collides with the 'draw by agreement' button's rect
+                    elif drawbyfifty_rect.collidepoint(event.pos):
+                        #changes the cursor to a diamond
+                        pygame.mouse.set_cursor(pygame.cursors.diamond)
+
+                        #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                        event_down = mouse_up_down("up")
+
+                        #checks whether the 'MOUSEBUTTONUP' event collides with the 'draw by agreement' button's rect
+                        if drawbyfifty_rect.collidepoint(event_down.pos):
+                            #changes the cursor to an arrow
+                            pygame.mouse.set_cursor(pygame.cursors.arrow)
+
+                            #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
+                            end_game("none", "FIFTY-MOVE RULE")
+
+
                     #changes the cursor to an arrow
                     pygame.mouse.set_cursor(pygame.cursors.arrow)
 
                     #updates the display
                     pygame.display.update()
+
+            """add comments"""
+            check_moves_record(moves_record)
         else:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if next_game_button.collidepoint(event.pos):
@@ -1413,6 +1498,12 @@ while not exit:
                         #loads the 'resign' and 'draw by agreement' button onto the screen
                         canvas.blit(resign, resign_rect)
                         canvas.blit(drawbyagree, drawbyagree_rect)
+
+                        """add comments"""
+                        drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
+                        button_50_made = False
+                        moves_record = []
+                        color = 0
 
                         #sets each king object to a variable
                         blackking = chessboard[4][0].status 
