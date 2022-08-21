@@ -1092,17 +1092,17 @@ def end_game(winner, win_or_draw):
         #positions the rect according to the type of draw (as the length of the names of different draws may vary)
         if win_or_draw == "STALEMATE" or win_or_draw == "AGREEMENT": 
             rect_text_end = text_type_end.get_rect().move(178, 375)
-
-
-            """Add comments"""
         elif win_or_draw == "FIFTY-MOVE RULE":
+            #changes the font type and modifies the contents of 'text_type_end' to the same text in the new font
             font2 = pygame.font.SysFont("Papyrus", 32)
             text_type_end = font2.render(win_or_draw, True, "black", "gray")
             rect_text_end = text_type_end.get_rect().move(139, 375)
         elif win_or_draw == "SEVENTY-FIVE-MOVE":
+            #changes the font type and modifies the contents of 'text_type_end' to the same text in the new font
             font2 = pygame.font.SysFont("Papyrus", 27)
             text_type_end = font2.render(win_or_draw, True, "black", "gray")
             rect_text_end = text_type_end.get_rect().move(138, 370)
+            #changes the font type and creates a new text that is positioned below the 'text_type_end' text
             font2 = pygame.font.SysFont("Papyrus", 20)
             text_type_end_2 = font2.render("RULE", True, "black", "gray")
             rect_text_end_2 = text_type_end_2.get_rect().move(298, 410)
@@ -1122,6 +1122,27 @@ def end_game(winner, win_or_draw):
 
     #updates the display
     pygame.display.update()
+
+#procedure which checks for the fifty-move rule and seventy-five-move rule and performs the necessary action(s)
+def check_moves_record(moves_record):
+    global button_50_made
+    #checks whether the moves_record list has 50 moves (1 move here is two turns)
+    #checks whether the button has already been made for the current 50 moves moved
+    #this is so that the button is not repeatedly made while waiting for the next chesspiece movement
+    if len(moves_record) == 50*2 and not button_50_made:
+        button_50_made = True
+        #draws the 'draw by fifty' button onto the screen
+        global drawbyfifty_rect
+        drawbyfifty_rect = drawbyfifty_rect.move(-45, 300)
+        canvas.blit(drawbyfifty, drawbyfifty_rect)
+        #updates the display
+        pygame.display.update()
+    elif len(moves_record) == 75*2:
+        #sets the global variable finished_game to True
+        global finished_game
+        finished_game = True
+        #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
+        end_game("none",  "SEVENTY-FIVE-MOVE")
 
 #main
 canvas = create_screen()
@@ -1171,28 +1192,15 @@ finished_game = False
 colors = ["white", "black"]
 color = 0
 
-"""add comments"""
-moves_record = []
+#loading the 'draw by fifty' button onto the screen, scaling it and positioning it (with its rect) on the screen
 drawbyfifty = pygame.image.load("stop.png")
 drawbyfifty = pygame.transform.scale(drawbyfifty, (45,45))
 drawbyfifty_rect = drawbyfifty.get_rect()
 drawbyfifty_rect = drawbyfifty.get_rect().move(50, 0)
 
-"""add comments"""
-def check_moves_record(moves_record):
-    global button_50_made
-    if len(moves_record) == 50*2 and not button_50_made:
-        button_50_made = True
-        global drawbyfifty_rect
-        drawbyfifty_rect = drawbyfifty_rect.move(-45, 300)
-        canvas.blit(drawbyfifty, drawbyfifty_rect)
-        pygame.display.update()
-    elif len(moves_record) == 75*2:
-        global finished_game
-        finished_game = True
-        end_game("none",  "SEVENTY-FIVE-MOVE")
-
-"""add comments"""
+#creating a list called 'moves_record' which will contain a list of the consecutive moves that were not a pawn movement or capture
+moves_record = []
+#sets the button_50_made variable to False, meaning that it has not been drawn onto the screen
 button_50_made = False
 
 #mainloop
@@ -1284,7 +1292,7 @@ while not exit:
                             #calls function to check move validity
                             valid = valid_move(available_moves, potential_x_y_click)
                             if valid:
-                                """add comments"""
+                                #sets 'capture' and 'castling' to False, denoting that a capture has not been made and the move was not a castling move
                                 capture = False
                                 castling = False
 
@@ -1294,10 +1302,10 @@ while not exit:
                                 if chess_square.status != "empty":
                                     chess_square.status.rect = chess_square.status.rect.move(-1000, -1000)
                                     canvas.blit(background, chess_square.rect, chess_square.rect)
+                                    #updates the display
                                     pygame.display.update()
+                                    #sets capture to True, signifying that there has been a capture made
                                     capture = True
-                                """add comments"""
-
 
                                 #erases the place where the chess piece was, along with the highlight, and replaces it with an empty background 
                                 canvas.blit(background, piece.rect, piece.rect) 
@@ -1336,7 +1344,7 @@ while not exit:
                                         #if so, calls the subroutine castling() to perform the castling   
                                         if special_moves[a][0] == "castling":
                                             chess.castling(piece, special_moves[a], potential_x_y_click, old_piece)
-                                            """add comments"""
+                                            #sets 'castling' to True, signifying that the move is a castling move
                                             castling = True
 
                                         #checks whether the special move is an en passant move
@@ -1373,17 +1381,26 @@ while not exit:
                                 if color > 1:
                                     color = 0
 
-                                """add comments"""
+                                #checks whether a capture has been made (and the apparent 'capture' was not actually a castling move, as a 'capture' is performed before the castling move is completed)
                                 if capture and not castling:
+                                    #resets 'moves_record' to []
                                     moves_record = []
+                                    #erases the spot where the button is and resets it to the background
                                     canvas.blit(background, drawbyfifty_rect, drawbyfifty_rect)
+                                    #moves the rect of the 'drawbyfifty' button back to its waiting position (the position it is in before it is moved and drawn)
                                     drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
+                                    #sets button_50_made to False, so that the button can be created again after the next 50 moves without capture or pawn movement
                                     button_50_made = False
-                                    
+
+                                #checks wehter a pawn has been moved  
                                 elif isinstance(piece, chess.pawn):
+                                    #resets 'moves_record' to []
                                     moves_record = []
+                                    #erases the spot where the button is and resets it to the background
                                     canvas.blit(background, drawbyfifty_rect, drawbyfifty_rect)
+                                    #moves the rect of the 'drawbyfifty' button back to its waiting position (the position it is in before it is moved and drawn)
                                     drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
+                                    #sets button_50_made to False, so that the button can be created again after the next 50 moves without capture or pawn movement
                                     button_50_made = False
                                     
                                 else:
@@ -1438,9 +1455,7 @@ while not exit:
                             #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
                             end_game("none", "AGREEMENT")
 
-
-                        """add comments"""  
-                    #checks whether there is a 'MOUSEBUTTONDOWN' event collides with the 'draw by agreement' button's rect
+                    #checks whether there is a 'MOUSEBUTTONDOWN' event collides with the 'draw by fifty-move rule' button's rect
                     elif drawbyfifty_rect.collidepoint(event.pos):
                         #changes the cursor to a diamond
                         pygame.mouse.set_cursor(pygame.cursors.diamond)
@@ -1448,7 +1463,7 @@ while not exit:
                         #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
                         event_down = mouse_up_down("up")
 
-                        #checks whether the 'MOUSEBUTTONUP' event collides with the 'draw by agreement' button's rect
+                        #checks whether the 'MOUSEBUTTONUP' event collides with the 'draw by fifty-move rule' button's rect
                         if drawbyfifty_rect.collidepoint(event_down.pos):
                             #changes the cursor to an arrow
                             pygame.mouse.set_cursor(pygame.cursors.arrow)
@@ -1463,7 +1478,7 @@ while not exit:
                     #updates the display
                     pygame.display.update()
 
-            """add comments"""
+            #calls 'check_moves_record' to check for the fifty-move rule and seventy-five-move rule and display the 'drawbyfifty' button or end the game by the 'seventy-five-move rule'
             check_moves_record(moves_record)
         else:
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -1499,10 +1514,14 @@ while not exit:
                         canvas.blit(resign, resign_rect)
                         canvas.blit(drawbyagree, drawbyagree_rect)
 
-                        """add comments"""
+                        #moves the rect of the 'drawbyfifty' button back to its waiting position (the position it is in before it is moved and drawn)
                         drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
+                        #sets button_50_made to False, so that the button can be created again after the next 50 moves without capture or pawn movement
                         button_50_made = False
+                        #resets 'moves_record' to []
                         moves_record = []
+                        
+                        #resets the 'color' index to 0
                         color = 0
 
                         #sets each king object to a variable
