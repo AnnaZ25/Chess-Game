@@ -204,6 +204,10 @@ class chess:
         find_before(neg_x_diag, moves_and_king_found[1], moves_and_king_found[2])
         moves = moves_and_king_found[0]
 
+        #removes the position the rook/queen is on from the available moves, so that it can be captured by the king when the king is in check, as long as that position is not also in check
+        moves.remove([x, y])
+        moves.remove([x, y])
+
         #calls find_moves() to check whether the moves can be made
         return chess.find_moves(self, moves, special_moves)
 
@@ -294,6 +298,10 @@ class chess:
         #finds the movements the rook can make on the row and column, appending them to the list 'moves'
         moves = find_rook_movements(moves, row, x, "row")
         moves = find_rook_movements(moves, col, y, "col")
+
+        #removes the position the rook/queen is on from the available moves, so that it can be captured by the king when the king is in check, as long as that position is not also in check
+        moves.remove([x, y])
+        moves.remove([x, y])
 
         #calls find_moves() to check whether the moves can be made
         return chess.find_moves(self, moves, special_moves)
@@ -911,8 +919,8 @@ class chess:
                         moves.append(moves_unfiltered[i])
                         #adding the 'can be captured en passant' move to the 'special_moves' list
                         special_moves.append(["can be captured en passant", moves_unfiltered[i]])
-                    #adding the diagonal moves with an empty spot to the 'special_moves' list, so that we can still record those spots as 'in_check' for the opposite color than that of the pawn
-                    elif chessboard[moves_unfiltered[i][0]][moves_unfiltered[i][1]].status == "empty" and moves_unfiltered[i][0] != x:
+                    #adding the diagonal moves to the 'special_moves' list, so that we can record those spots as 'in_check' for the opposite color than that of the pawn
+                    if moves_unfiltered[i][0] != x:
                         special_moves.append(["in check pawn", moves_unfiltered[i]])
             
             #checks whether the pawn would undergo promotion if moved to one of the places it can move to
@@ -1561,7 +1569,7 @@ while not exit:
             
             #updates the display
             pygame.display.update()
-
+            
             #waits before setting 'exit' to True to end the loop and close the window
             pygame.time.delay(800)
             exit = True
