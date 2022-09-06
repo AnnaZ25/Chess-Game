@@ -348,12 +348,15 @@ class chess:
             
             #sets the chessboard square status where the king/rook was before to 'empty'
             chess_square.status = "empty"  
-    
+
     #procedure that updates the 'in check' status of each chessboard square for both kings
-    def update_check():
+    def update_check(update_movement):
         #procedure that finds the areas 'in check' (for both kings) by each piece on the chessboard square
         #updates the chessboard square sqr_in_check_black or sqr_in_check_white to True if it is in check for the king of that particular color
-        def find_in_check(a, b, available_moves, special_moves):
+        def find_in_check(a, b, available_moves, special_moves, new_position):
+            if chessboard[a][b].status != "empty" and update_movement:
+                new_position.append([chessboard[a][b].status, chessboard[a][b]])
+                
             #checks whether the chess piece is a pawn
             if isinstance(chessboard[a][b].status, chess.pawn):
                 #finds the 'in check pawn' special moves which contain the diagonal moves of the pawn 
@@ -430,8 +433,10 @@ class chess:
                 chessboard[a][b].sqr_in_check_white = False
                 chessboard[a][b].sqr_in_check_black = False
 
+        new_position = []
+
         #loops through the chessboard squares and updates the chessboard square areas 'in check' (for both kings)
-        #this is done by changing the value of the chessboard square's sqr_in_check_black or sqr_in_check_white
+        #this is done by changing the value of the chessboard square's sqr_in_check_black or sqr_in_check_white4
         for a in range (0, len(chessboard)):
             for b in range(0, len(chessboard)): 
                 #checks whether the chessboard square is not empty
@@ -443,7 +448,10 @@ class chess:
                     special_moves = available_moves_and_special_moves[1]
 
                     #calls find_in_check() to find the areas in check by the chess piece and update their sqr_in_check_black or sqr_in_check_white values
-                    find_in_check(a, b, available_moves, special_moves)
+                    find_in_check(a, b, available_moves, special_moves, new_position)
+
+        if new_position != []:
+            game_record.append(new_position)
     
     #function which checks the 'available_moves' list passed in and returns only the movements that would not result in the king (of the same color as the piece) being in check 
     def check_check(self, current, available_moves):
@@ -480,7 +488,7 @@ class chess:
                 chessboard[available_moves[i][0]][available_moves[i][1]].status = self
                 
                 #calls update_check() to update the 'in check' values of each chessboard square
-                chess.update_check()
+                chess.update_check(False)
 
                 #calls king_square_in_check() to check whether the king of the same color as the piece is in check
                 king_square_in_check = king_sqr_in_check(self, king_square)
@@ -544,7 +552,7 @@ class chess:
                             chessboard[available_moves[i][0]][available_moves[i][1]].status = piece
 
                             #calls update_check() to update the 'in check' values of each chessboard square
-                            chess.update_check()
+                            chess.update_check(False)
 
                             #finds the moves the king would have with this new positioning
                             new_king_moves = king.moves(king_pos[0], king_pos[1], [])[0]
@@ -562,7 +570,7 @@ class chess:
 
                         #the status of the chessboard square that originally contained the chess piece is set to the chess piece again, returning its state to the state it has before it was tested
                         chessboard[a][b].status = piece
-                        chess.update_check()          
+                        chess.update_check(False)          
                 b += 1
                 if b == 8:
                     b = 0
@@ -946,6 +954,7 @@ def inverse(item):
 
 #procedure that sets up the chess board
 def set_up():
+    set_up_list = []
     colors = ["white", "black"]
     for x in range(0, 2):
         pos = [3, 4, 2, 1, 0, 5, 6, 7]
@@ -956,18 +965,28 @@ def set_up():
             y = 0
             z = 1
         chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        set_up_list.append([chessboard[pos[1]][y].status, chessboard[pos[1]][y]])
+        #set_up_list.append([chessboard[pos[0]][y].status, chessboard[pos[0]][y]])
         j = 0
+        
         for i in range (0,2):
             chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
             chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
+            set_up_list.append([chessboard[pos[2+j]][y].status, chessboard[pos[2+j]][y]])
+            #set_up_list.append([chessboard[pos[3+j]][y].status, chessboard[pos[3+j]][y]])
+            set_up_list.append([chessboard[pos[4+j]][y].status, chessboard[pos[4+j]][y]])
             j = 3
         j = 0
+        """
         for i in range (0, 8):
             chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
+            set_up_list.append([chessboard[pos[j]][z].status, chessboard[pos[j]][z]])
             j += 1
-
+            """
+    game_record.append(set_up_list)
+    
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
 #the loop will pick the first chessboard square selected in the list (in case the centre rect collides with more than one chessboard square)
 #function returns the coordinates of the chessboard square the piece should be placed on
@@ -1030,7 +1049,6 @@ def end_game(winner, win_or_draw):
     pygame.draw.rect(canvas, "#291715", handles, 20)
     pygame.draw.rect(canvas, "#fcd292", box2)
     pygame.draw.rect(canvas, "#291715", outline2, 5)
-    
 
     #loading the 'next game' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
     next_game = pygame.image.load("nextgame.png")
@@ -1115,6 +1133,17 @@ def end_game(winner, win_or_draw):
             text_type_end_2 = font2.render("RULE", True, "black", "gray")
             rect_text_end_2 = text_type_end_2.get_rect().move(298, 410)
             canvas.blit(text_type_end_2, rect_text_end_2)
+            "Add comments"
+        elif win_or_draw == "FIVE-FOLD":
+            #changes the font type and modifies the contents of 'text_type_end' to the same text in the new font
+            font2 = pygame.font.SysFont("Papyrus", 30)
+            text_type_end = font2.render(win_or_draw, True, "black", "gray")
+            rect_text_end = text_type_end.get_rect().move(225, 360)
+            #changes the font type and creates a new text that is positioned below the 'text_type_end' text
+            font2 = pygame.font.SysFont("Papyrus", 20)
+            text_type_end_2 = font2.render("REPETITION", True, "black", "gray")
+            rect_text_end_2 = text_type_end_2.get_rect().move(245, 405)
+            canvas.blit(text_type_end_2, rect_text_end_2)
     
     #finds the rect of the subtitle containing the word 'by' and positions it
     rect_text_by = text_by.get_rect().move(310, 298)
@@ -1152,11 +1181,46 @@ def check_moves_record(moves_record):
         #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
         end_game("none",  "SEVENTY-FIVE-MOVE")
 
+def check_3_and_5_fold_rep():
+    sequence_repeats = []
+    i = 0
+    while i < len(game_record):
+        repeated = 1
+        j = 0
+        while j < len(game_record):
+            if i != j:
+                repeat = 0
+                for k in range(0, len(game_record[i])):
+                    for l in range (0, len(game_record[j])):
+                        if game_record[i][k] == game_record[j][l]:
+                            repeat += 1
+
+                if repeat == len(game_record[i]):
+                    repeated += 1
+            j += 1
+        sequence_repeats.append(repeated)
+        i += 1
+
+    for i in sequence_repeats:
+        if i == 3:
+            global button_3_fold_made
+            if not button_3_fold_made:
+                global drawby3fold_rect
+                drawby3fold_rect = drawby3fold_rect.move(-50+598, 300)
+                canvas.blit(drawby3fold, drawby3fold_rect)
+                button_3_fold_made = True
+        elif i == 5:
+            end_game("none", "FIVE-FOLD")
+
 #main
 canvas = create_screen()
 background = load_background()
 canvas.blit(background, (0, 0))  
 standard = (70,70)      
+
+button_3_fold_made = False
+
+game_record = []
 
 #creating an array of all the squares, represented by rects, on the chess board
 chessboard = []
@@ -1206,6 +1270,12 @@ drawbyfifty = pygame.transform.scale(drawbyfifty, (45,45))
 drawbyfifty_rect = drawbyfifty.get_rect()
 drawbyfifty_rect = drawbyfifty.get_rect().move(50, 0)
 
+
+drawby3fold = pygame.image.load("stop2.png")
+drawby3fold = pygame.transform.scale(drawby3fold, (45,45))
+drawby3fold_rect = drawby3fold.get_rect()
+drawby3fold_rect = drawby3fold.get_rect().move(50, 0)
+
 #creating a list called 'moves_record' which will contain a list of the consecutive moves that were not a pawn movement or capture
 moves_record = []
 #sets the button_50_made variable to False, meaning that it has not been drawn onto the screen
@@ -1217,7 +1287,6 @@ while not exit:
         #checks whether 'finished_game' is False
         if not finished_game:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                
                 found = False
                 i = -1
                 #looping through the list of chess pieces to identify whether a chess piece has been selected. 
@@ -1378,7 +1447,8 @@ while not exit:
                                 piece.moved = True
 
                                 #calls update_check() to update the 'in check' status of each chessboard square for both kings
-                                chess.update_check()
+                                chess.update_check(True)
+                                check_3_and_5_fold_rep()
 
                                 #calls check_checkmate_stalemate() for each king to to check whether there is a checkmate or stalemate
                                 chess.check_checkmate_stalemate(whiteking)
@@ -1479,12 +1549,12 @@ while not exit:
                             #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
                             end_game("none", "FIFTY-MOVE RULE")
 
-
                     #changes the cursor to an arrow
                     pygame.mouse.set_cursor(pygame.cursors.arrow)
 
                     #updates the display
                     pygame.display.update()
+
 
             #calls 'check_moves_record' to check for the fifty-move rule and seventy-five-move rule and display the 'drawbyfifty' button or end the game by the 'seventy-five-move rule'
             check_moves_record(moves_record)
@@ -1515,6 +1585,9 @@ while not exit:
                         #setting the variable 'finished_game' to False
                         finished_game = False
 
+
+                        game_record = []
+
                         #calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
                         set_up()
                         
@@ -1524,11 +1597,13 @@ while not exit:
 
                         #moves the rect of the 'drawbyfifty' button back to its waiting position (the position it is in before it is moved and drawn)
                         drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
+                        drawby3fold_rect = drawby3fold_rect.move(-drawby3fold_rect[0]+50,-drawby3fold_rect[1])
                         #sets button_50_made to False, so that the button can be created again after the next 50 moves without capture or pawn movement
                         button_50_made = False
                         #resets 'moves_record' to []
                         moves_record = []
-                        
+                       
+                        button_3_fold_made = False
                         #resets the 'color' index to 0
                         color = 0
 
