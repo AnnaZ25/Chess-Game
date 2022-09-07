@@ -1133,7 +1133,6 @@ def end_game(winner, win_or_draw):
             text_type_end_2 = font2.render("RULE", True, "black", "gray")
             rect_text_end_2 = text_type_end_2.get_rect().move(298, 410)
             canvas.blit(text_type_end_2, rect_text_end_2)
-            "Add comments"
         elif win_or_draw == "FIVE-FOLD":
             #changes the font type and modifies the contents of 'text_type_end' to the same text in the new font
             font2 = pygame.font.SysFont("Papyrus", 30)
