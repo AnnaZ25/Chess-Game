@@ -1144,6 +1144,16 @@ def end_game(winner, win_or_draw):
             text_type_end_2 = font2.render("REPETITION", True, "black", "gray")
             rect_text_end_2 = text_type_end_2.get_rect().move(245, 405)
             canvas.blit(text_type_end_2, rect_text_end_2)
+        elif win_or_draw == "THREE-FOLD":
+            #changes the font type and modifies the contents of 'text_type_end' to the same text in the new font
+            font2 = pygame.font.SysFont("Papyrus", 30)
+            text_type_end = font2.render(win_or_draw, True, "black", "gray")
+            rect_text_end = text_type_end.get_rect().move(195, 360)
+            #changes the font type and creates a new text that is positioned below the 'text_type_end' text
+            font2 = pygame.font.SysFont("Papyrus", 20)
+            text_type_end_2 = font2.render("REPETITION", True, "black", "gray")
+            rect_text_end_2 = text_type_end_2.get_rect().move(245, 405)
+            canvas.blit(text_type_end_2, rect_text_end_2)
     
     #finds the rect of the subtitle containing the word 'by' and positions it
     rect_text_by = text_by.get_rect().move(310, 298)
@@ -1175,41 +1185,53 @@ def check_moves_record(moves_record):
         #updates the display
         pygame.display.update()
     elif len(moves_record) == 75*2:
-        #sets the global variable finished_game to True
-        global finished_game
-        finished_game = True
         #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
         end_game("none",  "SEVENTY-FIVE-MOVE")
 
+#procedure that checks for three-fold and five-fold repetition and performs the necessary action(s)
 def check_3_and_5_fold_rep():
     sequence_repeats = []
     i = 0
+    #loops through the list 'game_record' with a nested loop, comparing every item with every other item 
     while i < len(game_record):
         repeated = 1
         j = 0
         while j < len(game_record):
+            #if the two items are not the same item (meaning that they have different positions within the list 'game_record')
             if i != j:
                 repeat = 0
+                #loops through every chess piece position record in the list 'game_record' with a nested loop, comparing every chess piece position record with every other chess piece position record 
                 for k in range(0, len(game_record[i])):
                     for l in range (0, len(game_record[j])):
                         if game_record[i][k] == game_record[j][l]:
+                            #if a match is found, repeat is incremented by 1
                             repeat += 1
 
-                if repeat == len(game_record[i]):
+                #if the number of repeats is the same as the length of both the chess piece position records compared, repeated is incremented by 1
+                #this means that if the chess pieces are in exactly the same positions in both chess piece position records, then we have one repetition
+                if repeat == len(game_record[i]) and repeat == len(game_record[j]):
                     repeated += 1
             j += 1
+        #the number of repetitions for each chess piece position record in the 'game_record' is appended to the list 'sequence_repeats"
         sequence_repeats.append(repeated)
         i += 1
 
+    #the list 'sequence_repeats' is checked for the occurence of 3 or 5 repetitions
     for i in sequence_repeats:
         if i == 3:
             global button_3_fold_made
+            global drawby3fold_rect
+            #checks whether the 'draw by three-fold repetition' button has already been made  
+            #this is so that the button is not repeatedly made
             if not button_3_fold_made:
-                global drawby3fold_rect
-                drawby3fold_rect = drawby3fold_rect.move(-50+598, 300)
-                canvas.blit(drawby3fold, drawby3fold_rect)
                 button_3_fold_made = True
+                #draws the 'draw by three-fold repetition' button onto the screen
+                drawby3fold_rect = drawby3fold_rect.move(-50+598, 300)
+                canvas.blit(drawby3fold, drawby3fold_rect)          
+                #updates the display
+                pygame.display.update()
         elif i == 5:
+            #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
             end_game("none", "FIVE-FOLD")
 
 #main
@@ -1217,10 +1239,6 @@ canvas = create_screen()
 background = load_background()
 canvas.blit(background, (0, 0))  
 standard = (70,70)      
-
-button_3_fold_made = False
-
-game_record = []
 
 #creating an array of all the squares, represented by rects, on the chess board
 chessboard = []
@@ -1230,21 +1248,15 @@ for i in range (0, 8):
         chess_row.append(square(i, j))
     chessboard.append(chess_row)
 
+#creating a list called 'moves_record' which will contain a list of the consecutive moves that were not a pawn movement or capture
+moves_record = []
+
+#creating a list called 'game_record' which will contain a list of all chess pieces and their positions throught the game
+game_record = []
+
 #calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
 chess_pieces = []
 set_up()
-
-#loading the 'resign' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
-resign = pygame.image.load("stop.png")
-resign = pygame.transform.scale(resign, (45,45))
-resign_rect = resign.get_rect().move(598, 5)
-canvas.blit(resign, resign_rect)
-
-#loading the 'resign' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
-drawbyagree = pygame.image.load("stop2.png")
-drawbyagree = pygame.transform.scale(drawbyagree, (45,45))
-drawbyagree_rect = drawbyagree.get_rect().move(5, 5)
-canvas.blit(drawbyagree, drawbyagree_rect)
 
 #sets each king object to a variable
 blackking = chessboard[4][0].status  
@@ -1264,22 +1276,35 @@ finished_game = False
 colors = ["white", "black"]
 color = 0
 
+#loading the 'resign' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
+resign = pygame.image.load("stop.png")
+resign = pygame.transform.scale(resign, (45,45))
+resign_rect = resign.get_rect().move(598, 5)
+canvas.blit(resign, resign_rect)
+
+#loading the 'resign' button onto the screen, scaling it and drawing and positioning it (with its rect) on the screen
+drawbyagree = pygame.image.load("stop2.png")
+drawbyagree = pygame.transform.scale(drawbyagree, (45,45))
+drawbyagree_rect = drawbyagree.get_rect().move(5, 5)
+canvas.blit(drawbyagree, drawbyagree_rect)
+
 #loading the 'draw by fifty' button onto the screen, scaling it and positioning it (with its rect) on the screen
 drawbyfifty = pygame.image.load("stop.png")
 drawbyfifty = pygame.transform.scale(drawbyfifty, (45,45))
 drawbyfifty_rect = drawbyfifty.get_rect()
 drawbyfifty_rect = drawbyfifty.get_rect().move(50, 0)
 
+#sets the 'button_50_made' variable to False, meaning that it has not been drawn onto the screen
+button_50_made = False
 
+#loading the 'draw by three-fold repetition' button onto the screen, scaling it and positioning it (with its rect) on the screen
 drawby3fold = pygame.image.load("stop2.png")
 drawby3fold = pygame.transform.scale(drawby3fold, (45,45))
 drawby3fold_rect = drawby3fold.get_rect()
 drawby3fold_rect = drawby3fold.get_rect().move(50, 0)
 
-#creating a list called 'moves_record' which will contain a list of the consecutive moves that were not a pawn movement or capture
-moves_record = []
-#sets the button_50_made variable to False, meaning that it has not been drawn onto the screen
-button_50_made = False
+#sets the 'button_3_fold_made' variable to False, meaning that it has not been drawn onto the screen
+button_3_fold_made = False
 
 #mainloop
 while not exit:
@@ -1448,11 +1473,13 @@ while not exit:
 
                                 #calls update_check() to update the 'in check' status of each chessboard square for both kings
                                 chess.update_check(True)
-                                check_3_and_5_fold_rep()
 
                                 #calls check_checkmate_stalemate() for each king to to check whether there is a checkmate or stalemate
                                 chess.check_checkmate_stalemate(whiteking)
                                 chess.check_checkmate_stalemate(blackking)
+
+                                #calls check_3_and_5_fold_rep() to check for three-fold and five-fold repetition
+                                check_3_and_5_fold_rep()
 
                                 #updates the color index, so that the opposite color is the only one that can be moved on the next turn
                                 color += 1
@@ -1548,13 +1575,28 @@ while not exit:
 
                             #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
                             end_game("none", "FIFTY-MOVE RULE")
+                    
+                    #checks whether there is a 'MOUSEBUTTONDOWN' event collides with the 'draw by three-fold repetition rule' button's rect
+                    elif drawby3fold_rect.collidepoint(event.pos):
+                        #changes the cursor to a diamond
+                        pygame.mouse.set_cursor(pygame.cursors.diamond)
+
+                        #calling the function 'mouse_up_down' which waits and checks for the event 'MOUSEBUTTONUP' or 'MOUSEBUTTONDOWN' depending on the argument passed in
+                        event_down = mouse_up_down("up")
+
+                        #checks whether the 'MOUSEBUTTONUP' event collides with the 'draw by three-fold repetition rule' button's rect
+                        if drawby3fold_rect.collidepoint(event_down.pos):
+                            #changes the cursor to an arrow
+                            pygame.mouse.set_cursor(pygame.cursors.arrow)
+
+                            #calls end_game(), passing in the type of end and the winner of the game to set up the needed 'end of game' display
+                            end_game("none", "THREE-FOLD")
 
                     #changes the cursor to an arrow
                     pygame.mouse.set_cursor(pygame.cursors.arrow)
 
                     #updates the display
                     pygame.display.update()
-
 
             #calls 'check_moves_record' to check for the fifty-move rule and seventy-five-move rule and display the 'drawbyfifty' button or end the game by the 'seventy-five-move rule'
             check_moves_record(moves_record)
@@ -1585,7 +1627,7 @@ while not exit:
                         #setting the variable 'finished_game' to False
                         finished_game = False
 
-
+                        #resets the list 'game_record'
                         game_record = []
 
                         #calling the procedure 'set_up' to set up the chess pieces and load the images onto the board
@@ -1598,12 +1640,16 @@ while not exit:
                         #moves the rect of the 'drawbyfifty' button back to its waiting position (the position it is in before it is moved and drawn)
                         drawbyfifty_rect = drawbyfifty_rect.move(-drawbyfifty_rect[0]+50,-drawbyfifty_rect[1])
                         drawby3fold_rect = drawby3fold_rect.move(-drawby3fold_rect[0]+50,-drawby3fold_rect[1])
+                        
                         #sets button_50_made to False, so that the button can be created again after the next 50 moves without capture or pawn movement
                         button_50_made = False
+
+                        #sets button_3_fold_made to False, so that the button can be created again after the next three-fold repetition has occured
+                        button_3_fold_made = False
+
                         #resets 'moves_record' to []
                         moves_record = []
                        
-                        button_3_fold_made = False
                         #resets the 'color' index to 0
                         color = 0
 
