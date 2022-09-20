@@ -9,7 +9,6 @@ def create_screen():
     img = pygame.image.load("blackking.png")
     pygame.display.set_icon(img) 
     pygame.mouse.set_cursor(pygame.cursors.arrow)
-
     return canvas
 
 def load_background():
@@ -139,7 +138,6 @@ class chess:
                     if isinstance(chessboard[diag[i][0]][diag[i][1]].status, chess.king):
                         king_found = True
                 i -= 1
-
             return moves, king_found, i
 
         #function that moves through the diagonal from end to beginning
@@ -157,7 +155,6 @@ class chess:
                     if isinstance(chessboard[diag[i][0]][diag[i][1]].status, chess.king):
                         king_found = True
                 i += 1
-
             return moves, king_found, i
 
         #procedure that finds the chessboard square in the diagonal right after the king
@@ -708,6 +705,8 @@ class chess:
             moves = moves_and_special_moves[0]
             #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
             special_moves = moves_and_special_moves[1] 
+
+            #returns the bishop's movements and special_moves
             return moves, special_moves
 
     #class for the knights
@@ -733,6 +732,7 @@ class chess:
             #sets 'special_moves' to the special moves (the check) returned from the find_moves() function
             special_moves = moves_and_special_moves[1]
 
+            #returns the knight's movements and special_moves
             return moves, special_moves
 
     #class for the rooks
@@ -796,7 +796,8 @@ class chess:
                                     special_moves.append(["castling", [4, y], "l"])
                                     #appends the chessboard square coordinates of the king to the list 'moves'
                                     moves.append([4, y])
-
+            
+            #returns the rook's movements and special_moves
             return moves, special_moves
         
     #class for the pawns
@@ -936,7 +937,8 @@ class chess:
             for i in range (0, len(moves)):
                 if moves[i][1] == 7 and self.color == "black" or moves[i][1] == 0 and self.color == "white":
                     special_moves.append(["pawn promote", moves[i]])
-
+            
+            #returns the pawn's movements and special_moves
             return moves, special_moves
             
 #function that loads the chess pieces
@@ -965,26 +967,26 @@ def set_up():
             y = 0
             z = 1
         chessboard[pos[1]][y].status = chess.king(colors[x], chessboard[pos[1]][y])
-        #chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
+        chessboard[pos[0]][y].status = chess.queen(colors[x], chessboard[pos[0]][y])
         set_up_list.append([chessboard[pos[1]][y].status, chessboard[pos[1]][y]])
-        #set_up_list.append([chessboard[pos[0]][y].status, chessboard[pos[0]][y]])
+        set_up_list.append([chessboard[pos[0]][y].status, chessboard[pos[0]][y]])
         j = 0
         
         for i in range (0,2):
             chessboard[pos[2+j]][y].status = chess.bishop(colors[x], chessboard[pos[2+j]][y])
-            #chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
+            chessboard[pos[3+j]][y].status = chess.knight(colors[x], chessboard[pos[3+j]][y])
             chessboard[pos[4+j]][y].status = chess.rook(colors[x], chessboard[pos[4+j]][y])
             set_up_list.append([chessboard[pos[2+j]][y].status, chessboard[pos[2+j]][y]])
-            #set_up_list.append([chessboard[pos[3+j]][y].status, chessboard[pos[3+j]][y]])
+            set_up_list.append([chessboard[pos[3+j]][y].status, chessboard[pos[3+j]][y]])
             set_up_list.append([chessboard[pos[4+j]][y].status, chessboard[pos[4+j]][y]])
             j = 3
         j = 0
-        """
+        
         for i in range (0, 8):
             chessboard[j][z].status = chess.pawn(colors[x], chessboard[j][z])
             set_up_list.append([chessboard[pos[j]][z].status, chessboard[pos[j]][z]])
             j += 1
-            """
+            
     game_record.append(set_up_list)
     
 #function that contains a loop that searches through the 2-D list of chessboard square until it finds the one that collides with the centre rect of the chess piece
@@ -1612,6 +1614,7 @@ while not exit:
                     if next_game_button.collidepoint(event_down.pos):
                         #changes the cursor to an arrow
                         pygame.mouse.set_cursor(pygame.cursors.arrow)
+
                         canvas.blit(background, (0, 0)) 
                         #deletes all the chess pieces and removes them from the list of chess pieces
                         #updates the chessboard the chess piece was standing on to empty
@@ -1625,7 +1628,6 @@ while not exit:
 
                         #setting the variable 'finished_game' to False
                         finished_game = False
-
                         #resets the list 'game_record'
                         game_record = []
 
@@ -1642,7 +1644,6 @@ while not exit:
                         
                         #sets button_50_made to False, so that the button can be created again after the next 50 moves without capture or pawn movement
                         button_50_made = False
-
                         #sets button_3_fold_made to False, so that the button can be created again after the next three-fold repetition has occured
                         button_3_fold_made = False
 
